@@ -1,5 +1,9 @@
 #!/bin/bash
+set -o errexit
+DOCKER_IMG_PROXY=registry.cn-hangzhou.aliyuncs.com/dmcloudv1/udp-proxy:latest
 mkdir -p .tmp
-docker run --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp golang:1.8.6-alpine go build -v main.go -o main
+docker run --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp registry.cn-hangzhou.aliyuncs.com/dmcloudv2/goland-1.9-alpine \
+/bin/sh -c "go get github.com/1lann/udp-forward && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main -v main.go"
 mv main .tmp/
-docker build . -t registry.cn-hangzhou.aliyuncs.com/dmcloudv1/udp-proxy:latest
+docker build . -t ${DOCKER_IMG_PROXY}
+docker push ${DOCKER_IMG_PROXY}

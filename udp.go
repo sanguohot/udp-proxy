@@ -12,6 +12,7 @@ func read(conn *net.UDPConn) {
 			fmt.Printf("error during read: %s", err)
 		}
 		fmt.Printf("receive %s from <%s>\n", data[:n], remoteAddr)
+		//go conn.WriteToUDP(data, remoteAddr)
 	}
 }
 func main() {
