@@ -28,7 +28,7 @@ func read(conn *net.UDPConn) {
 	}
 }
 func main() {
-	addr := &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 2023}
+	addr := &net.UDPAddr{IP: net.ParseIP("0.0.0.0"), Port: 2023}
 	go func() {
 		listener, err := net.ListenUDP("udp", addr)
 		if err != nil {

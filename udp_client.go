@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-var raddr = flag.String("raddr", "127.0.0.1:2023", "remote server address")
+var raddr = flag.String("raddr", "120.78.221.5:2023", "remote server address")
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -35,7 +35,7 @@ func main() {
 
 	// Make a connection
 	tmpAddr := &net.UDPAddr{
-		IP:   net.ParseIP("127.0.0.1"),
+		IP:   net.ParseIP("0.0.0.0"),
 		Port: 0,
 	}
 
