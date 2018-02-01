@@ -3,7 +3,18 @@ import (
 "fmt"
 "net"
 "os"
+"time"
 )
+
+func write(conn *net.UDPConn,remoteAddr *net.UDPAddr,data []byte)  {
+	//收到什么返回什么
+	conn.WriteToUDP(data,remoteAddr)
+	sleep := 1000 * time.Millisecond
+	time.Sleep(sleep)
+	buf := []byte("after sleep "+sleep.String())
+	fmt.Printf("send [%s] to <%s>\n", buf, remoteAddr)
+	conn.WriteToUDP(buf,remoteAddr)
+}
 func read(conn *net.UDPConn) {
 	for {
 		data := make([]byte, 1024)
@@ -11,8 +22,9 @@ func read(conn *net.UDPConn) {
 		if err != nil {
 			fmt.Printf("error during read: %s", err)
 		}
-		fmt.Printf("receive %s from <%s>\n", data[:n], remoteAddr)
-		//go conn.WriteToUDP(data, remoteAddr)
+		fmt.Printf("receive [%s] from <%s>\n", data[:n], remoteAddr)
+		go func() {}()
+		go write(conn, remoteAddr, data)
 	}
 }
 func main() {

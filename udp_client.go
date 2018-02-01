@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 )
 
 var raddr = flag.String("raddr", "127.0.0.1:2023", "remote server address")
@@ -14,6 +15,17 @@ func init() {
 	flag.Parse()
 }
 
+func listen(conn *net.UDPConn)  {
+	for {
+		buf := make([]byte, 1024)
+		rn, rmAddr, err := conn.ReadFromUDP(buf)
+		if err != nil {
+			log.Println(err)
+		} else {
+			fmt.Printf("<<<  %d bytes received from: %v, data: %s\n", rn, rmAddr, string(buf[:rn]))
+		}
+	}
+}
 func main() {
 	// Resolving Address
 	remoteAddr, err := net.ResolveUDPAddr("udp", *raddr)
@@ -35,19 +47,14 @@ func main() {
 	defer conn.Close()
 
 	// write a message to server
-	_, err = conn.Write([]byte("hello"))
+	_, err = conn.Write([]byte("hello world"))
 	if err != nil {
 		log.Println(err)
 	} else {
 		fmt.Println(">>> Packet sent to: ", *raddr)
 	}
 
-	// Receive response from server
-	buf := make([]byte, 1024)
-	rn, rmAddr, err := conn.ReadFromUDP(buf)
-	if err != nil {
-		log.Println(err)
-	} else {
-		fmt.Printf("<<<  %d bytes received from: %v, data: %s\n", rn, rmAddr, string(buf[:rn]))
-	}
+	go listen(conn)
+	//确保程序不退出
+	os.Stdin.Read(make([]byte,1))
 }
