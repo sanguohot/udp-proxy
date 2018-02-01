@@ -1,6 +1,5 @@
 FROM scratch
-WORKDIR /opt
-ADD .tmp/* /opt/
-ADD ca-certificates.crt /etc/ssl/certs/
-EXPOSE 2022
-ENTRYPOINT ["/opt/main"]
+COPY ./.tmp/main /
+COPY ca-certificates.crt /etc/ssl/certs/
+EXPOSE 2022/udp
+ENTRYPOINT ["/main"]

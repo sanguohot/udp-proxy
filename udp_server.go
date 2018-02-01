@@ -23,12 +23,11 @@ func read(conn *net.UDPConn) {
 			fmt.Printf("error during read: %s", err)
 		}
 		fmt.Printf("receive [%s] from <%s>\n", data[:n], remoteAddr)
-		go func() {}()
 		go write(conn, remoteAddr, data)
 	}
 }
 func main() {
-	addr := &net.UDPAddr{IP: net.ParseIP("0.0.0.0"), Port: 2023}
+	addr := &net.UDPAddr{IP: net.ParseIP("0.0.0.0"), Port: 2022}
 	go func() {
 		listener, err := net.ListenUDP("udp", addr)
 		if err != nil {

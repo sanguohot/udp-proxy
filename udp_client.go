@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-var raddr = flag.String("raddr", "120.78.221.5:2023", "remote server address")
+var raddr = flag.String("raddr", "server02.dmcld.com:12022", "remote server address")
 
 func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -27,34 +27,34 @@ func listen(conn *net.UDPConn)  {
 	}
 }
 func main() {
-	// Resolving Address
+	// 解析dns
 	remoteAddr, err := net.ResolveUDPAddr("udp", *raddr)
 	if err != nil {
 		log.Fatalln("Error: ", err)
 	}
 
-	// Make a connection
-	tmpAddr := &net.UDPAddr{
+	// 设置本地地址
+	localAddr := &net.UDPAddr{
 		IP:   net.ParseIP("0.0.0.0"),
 		Port: 0,
 	}
 
-	conn, err := net.DialUDP("udp", tmpAddr, remoteAddr)
-	// Exit if some error occured
+	conn, err := net.DialUDP("udp", localAddr, remoteAddr)
+	// 出错退出
 	if err != nil {
 		log.Fatalln("Error: ", err)
 	}
 	defer conn.Close()
 
-	// write a message to server
+	// 开始发送消息
 	_, err = conn.Write([]byte("hello world"))
 	if err != nil {
 		log.Println(err)
 	} else {
 		fmt.Println(">>> Packet sent to: ", *raddr)
 	}
-
+	// 开始监听服务器返回消息
 	go listen(conn)
-	//确保程序不退出
+	// 确保程序不退出
 	os.Stdin.Read(make([]byte,1))
 }
