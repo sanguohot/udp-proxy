@@ -7,7 +7,7 @@ import (
 
 func main() {
 	// Forward(src, dst). It's asynchronous.
-	_, err := forward.Forward("0.0.0.0:2022", "localhost:2023", forward.DefaultTimeout)
+	_, err := forward.Forward("0.0.0.0:4042", "dmcld-v1-123456-svc:2022", forward.DefaultTimeout)
 	if err != nil {
 		panic(err)
 	}
