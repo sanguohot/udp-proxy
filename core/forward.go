@@ -118,7 +118,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	f.connectionsMutex.RLock()
 	conn, found := f.connections[addr.String()]
 	f.connectionsMutex.RUnlock()
-
+	logs.Info("是否找到连接",found,"连接对象为",conn)
 	if !found {
 		conn, err := net.ListenUDP("udp", f.client)
 		if err != nil {
