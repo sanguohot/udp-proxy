@@ -12,6 +12,7 @@ RUN ls -al /opt/udp
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main -v main.go
 
 FROM scratch
+ENV GODEBUG=netdns=go
 COPY ca-certificates.crt /etc/ssl/certs/
 WORKDIR /root/
 COPY --from=0 /opt/udp .
