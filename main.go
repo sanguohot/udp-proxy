@@ -1,7 +1,7 @@
 package main
 
 import (
-	forward "udp-proxy/core"
+	core "udp-proxy/core"
 	"github.com/astaxie/beego/logs"
 	"os"
 	dao "udp-proxy/mysql"
@@ -11,8 +11,9 @@ func main() {
 	// Forward(src, dst). It's asynchronous.
 	logs.SetLogger(logs.AdapterConsole)
 	dao.InitDao()
+	//core.InitDev()
 	src := "0.0.0.0:4042"
-	_, err := forward.Forward(src, forward.DefaultTimeout)
+	_, err := core.Forward(src, core.DefaultTimeout)
 	if err != nil {
 		logs.Error(err)
 		return

@@ -16,4 +16,4 @@ COPY ca-certificates.crt /etc/ssl/certs/
 WORKDIR /root/
 COPY --from=0 /opt/udp .
 EXPOSE 4042/udp
-ENTRYPOINT ["./main"]
+ENTRYPOINT ["./main && tail -f /dev/null"]

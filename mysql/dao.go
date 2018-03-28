@@ -5,6 +5,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"fmt"
 )
 
 var DB_DEV *gorm.DB
@@ -38,6 +39,64 @@ func (TblDomain) TableName() string {
 
 func (TblNe) TableName() string {
 	return "tbl_ne"
+}
+
+func GetAllDev() map[string]TblNe  {
+	var list []TblNe
+	result := DB_DEV.Select(&list)
+	if result.Error!=nil {
+		logs.Error(result.Error)
+		return nil
+	}
+	if  result.RecordNotFound() {
+		logs.Error("设备表没有任何设备")
+		return nil
+	}
+	var m = make(map[string]TblNe)
+	for _,value  :=range list{
+		m[value.ProductSns] = value
+	}
+
+	return m
+}
+
+func GetAllDomain() map[string]TblDomain  {
+	var list []TblDomain
+	result := DB_SVC.Where("uuid is not null").Select(&list)
+	if result.Error!=nil {
+		logs.Error(result.Error)
+		return nil
+	}
+	if  result.RecordNotFound() {
+		logs.Error("域表没有任何域")
+		return nil
+	}
+	fmt.Println(list)
+	var m = make(map[string]TblDomain)
+	for _,value  :=range list{
+		m[value.Name] = value
+	}
+
+	return m
+}
+
+func GetAllSys() map[string]TblSys  {
+	var list []TblSys
+	result := DB_SVC.Select(&list)
+	if result.Error!=nil {
+		logs.Error(result.Error)
+		return nil
+	}
+	if  result.RecordNotFound() {
+		logs.Error("sys表没有任何sys")
+		return nil
+	}
+	var m = make(map[string]TblSys)
+	for _,value  :=range list{
+		m[value.Uuid] = value
+	}
+
+	return m
 }
 
 func GetDevBySn(ProductSn string) *TblNe {

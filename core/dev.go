@@ -96,3 +96,10 @@ func FindAndUpdateBackendFromDb(sn string)  {
 		return
 	}
 }
+
+func InitDev()  {
+	domainMap := dao.GetAllDomain()
+	sysMap := dao.GetAllSys()
+	devMap := dao.GetAllDev()
+	logs.Info(domainMap,sysMap,devMap)
+}
