@@ -37,23 +37,30 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 		return nil
 	}
 	backend := FindBackendBySn(sn)
-	if backend != nil {
-		//dstHost = fmt.Sprintf("%s:%d", backend.svc, defaultDstPort)
-		dstHost = backend.svc
-	}else {
-		//dstHost = fmt.Sprintf("%s:%d", dao.GetDefaultSvcName(), defaultDstPort)
-		dstHost = dao.GetDefaultSvcName()
+	if backend == nil {
+		logs.Error("设备找不到服务名,可能需要从内存加载,先返回")
+		return nil
 	}
+
+	if backend.svc == "" {
+		//这里先发往默认服务,后续再优化
+		dstHost = dao.GetDefaultSvcName()
+	}else {
+		dstHost = backend.svc
+	}
+
 	if dstHost == "" {
 		logs.Error("找不到服务")
 		return nil
 	}
+
 	ip := GetIpByDnsLookup(dstHost)
 	if ip == "" {
 		return nil
 	}
 	IP := net.ParseIP(ip)
 	if IP == nil {
+		logs.Error("ip地址非法",ip)
 		return nil
 	}
 	dst := net.UDPAddr{
@@ -107,8 +114,9 @@ func FindAndUpdateBackendFromDb(sn string)  {
 }
 
 func InitDev()  {
-	domainMap := dao.GetAllDomain()
-	sysMap := dao.GetAllSys()
-	devMap := dao.GetAllDev()
-	logs.Info(domainMap,sysMap,devMap)
+	logs.SetLogger(logs.AdapterConsole)
+	//domainMap := dao.GetAllDomain()
+	//sysMap := dao.GetAllSys()
+	//devMap := dao.GetAllDev()
+	//logs.Info(domainMap,sysMap,devMap)
 }

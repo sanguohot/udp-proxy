@@ -43,6 +43,8 @@ var DefaultTimeout = time.Minute * 5
 // implements a reverse NAT and thus supports multiple seperate users. Forward
 // is also asynchronous.
 func Forward(src string, timeout time.Duration) (*Forwarder, error) {
+	logs.SetLogger(logs.AdapterConsole)
+
 	forwarder := new(Forwarder)
 	forwarder.connectCallback = func(addr string) {}
 	forwarder.disconnectCallback = func(addr string) {}

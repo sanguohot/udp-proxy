@@ -7,6 +7,7 @@ import (
 )
 
 func GetIpByDnsLookup(host string) string {
+	logs.SetLogger(logs.AdapterConsole)
 	hosts, err := net.LookupHost(host)
 	if err != nil {
 		logs.Error(err)

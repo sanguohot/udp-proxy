@@ -194,6 +194,7 @@ func InitConnection(path string) * gorm.DB{
 }
 
 func InitDao()  {
+	logs.SetLogger(logs.AdapterConsole)
 	DB_DEV = InitConnection("root:MTIzNDU2@tcp(47.96.145.70:3306)/dmcld-v1-all")
 	DB_SVC = InitConnection("root:MTIzNDU2@tcp(47.96.145.70:3306)/dmcloud-v1")
 }

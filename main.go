@@ -20,7 +20,7 @@ func main() {
 	// Forward(src, dst). It's asynchronous.
 	logs.SetLogger(logs.AdapterConsole)
 	dao.InitDao()
-	//core.InitDev()
+	core.InitDev()
 	src := "0.0.0.0:4042"
 	_, err := core.Forward(src, core.DefaultTimeout)
 	if err != nil {
