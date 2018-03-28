@@ -84,7 +84,7 @@ func GetDomainByDomainName(name string) *TblDomain {
 func GetSysByDomainName(domainName string) *TblSys {
 	var t TblSys
 	domain := GetDomainByDomainName(domainName)
-	if(domain == nil){
+	if domain == nil {
 		return nil
 	}
 	record:=DB_SVC.Where("uuid = ?", domain.SysUuid).First(&t)
@@ -105,10 +105,11 @@ func GetSvcNameBySn(sn string)string  {
 	}
 	domain:=dev.DomainName
 	if domain == "" {
+		logs.Error("设备域名非法",dev)
 		return ""
 	}
 	sys := GetSysByDomainName(domain)
-	if sys==nil {
+	if sys == nil {
 		return ""
 	}
 	return sys.SvcName
