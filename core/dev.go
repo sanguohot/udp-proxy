@@ -67,6 +67,7 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 		IP: IP,
 		Port: defaultDstPort,
 	}
+	logs.Info("目标地址",dst)
 	return &dst
 }
 
