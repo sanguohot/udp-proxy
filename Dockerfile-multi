@@ -1,7 +1,14 @@
 FROM registry.cn-hangzhou.aliyuncs.com/dmcloudv2/goland-1.9-alpine
 WORKDIR /opt/udp
-RUN go get -d -v github.com/1lann/udp-forward
+RUN go get -d -v github.com/astaxie/beego/logs \
+&& go get -d -v github.com/jinzhu/gorm \
+&& go get -d -v github.com/jinzhu/gorm/dialects/mysql
+COPY core $GOPATH/src/udp-proxy/core
+COPY mysql $GOPATH/src/udp-proxy/mysql
 COPY main.go .
+RUN ls -al $GOPATH/src/udp-proxy/core
+RUN ls -al $GOPATH/src/udp-proxy/mysql
+RUN ls -al /opt/udp
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main -v main.go
 
 FROM scratch

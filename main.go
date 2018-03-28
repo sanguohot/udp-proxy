@@ -1,18 +1,23 @@
 package main
 
 import (
-	"github.com/1lann/udp-forward"
+	forward "udp-proxy/core"
+	"github.com/astaxie/beego/logs"
 	"os"
+	dao "udp-proxy/mysql"
 )
 
 func main() {
 	// Forward(src, dst). It's asynchronous.
-	_, err := forward.Forward("0.0.0.0:4042", "dmcld-v1-123456-svc:2022", forward.DefaultTimeout)
+	logs.SetLogger(logs.AdapterConsole)
+	dao.InitDao()
+	src := "0.0.0.0:4042"
+	_, err := forward.Forward(src, forward.DefaultTimeout)
 	if err != nil {
-		panic(err)
+		logs.Error(err)
+		return
 	}
-
-	// Do something...
+	logs.Info("UDP转发代理初始化成功,正在监听",src)
 	//确保程序不退出
 	os.Stdin.Read(make([]byte,1))
 }
