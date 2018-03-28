@@ -14,6 +14,7 @@ type Backend struct {
 	svc string
 }
 
+const defaultDstPort = 2022
 const REGISTER_MSG_LEN = 1308
 const REGISTER_MSG_SN_OFFSET = 12
 const REGISTER_MSG_SN_LEN = 8
@@ -29,7 +30,7 @@ func IsValidSn(sn string)bool  {
 }
 
 func GetDstFromOffset(stream []byte) *net.UDPAddr  {
-	var dstAddr string
+	var dstHost string
 	sn := FindSnByOffset(stream)
 	if sn == "" {
 		logs.Error("找不到合法的设备序列号,直接返回")
@@ -37,21 +38,29 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 	}
 	backend := FindBackendBySn(sn)
 	if backend != nil {
-		dstAddr = fmt.Sprintf("%s:%d", backend.svc, defaultDstPort)
+		//dstHost = fmt.Sprintf("%s:%d", backend.svc, defaultDstPort)
+		dstHost = backend.svc
 	}else {
-		dstAddr = fmt.Sprintf("%s:%d", dao.GetDefaultSvcName(), defaultDstPort)
+		//dstHost = fmt.Sprintf("%s:%d", dao.GetDefaultSvcName(), defaultDstPort)
+		dstHost = dao.GetDefaultSvcName()
 	}
-	if dstAddr == "" {
+	if dstHost == "" {
 		logs.Error("找不到服务")
 		return nil
 	}
-
-	dst, err := net.ResolveUDPAddr("udp", dstAddr)
-	if err != nil {
-		logs.Error(err)
+	ip := GetIpByDnsLookup(dstHost)
+	if ip == "" {
 		return nil
 	}
-	return dst
+	IP := net.ParseIP(ip)
+	if IP == nil {
+		return nil
+	}
+	dst := net.UDPAddr{
+		IP: IP,
+		Port: defaultDstPort,
+	}
+	return &dst
 }
 
 //从报文中解析出sn，要求该报文是为注册报文

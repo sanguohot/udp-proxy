@@ -9,7 +9,6 @@ import (
 )
 
 const bufferSize = 4096
-const defaultDstPort = 2022
 
 type connection struct {
 	udp        *net.UDPConn
