@@ -18,7 +18,7 @@ const defaultDstPort = 2022
 const REGISTER_MSG_LEN = 1308
 const REGISTER_MSG_SN_OFFSET = 12
 const REGISTER_MSG_SN_LEN = 8
-const REGISTER_MSG_HEAD_LEN = 2
+const REGISTER_MSG_HEAD_LEN = 0
 var v  = make(map[string]string)
 
 func IsValidSn(sn string)bool  {
