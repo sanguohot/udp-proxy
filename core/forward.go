@@ -141,7 +141,11 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 
 		f.connectCallback(addr.String())
 
-		conn.WriteTo(data, dst)
+		_,err = conn.WriteTo(data, dst)
+		if err != nil {
+			logs.Error(err)
+			return
+		}
 
 		for {
 			buf := make([]byte, bufferSize)
@@ -163,7 +167,11 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		return
 	}
 
-	conn.udp.WriteTo(data, conn.dst)
+	_,err := conn.udp.WriteTo(data, conn.dst)
+	if err != nil {
+		logs.Error(err)
+		return
+	}
 
 	shouldChangeTime := false
 	f.connectionsMutex.RLock()
