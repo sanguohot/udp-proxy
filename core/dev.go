@@ -43,7 +43,10 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 	}
 	backend := FindBackendBySn(sn)
 	if backend == nil {
-		logs.Error("设备找不到服务名,需要从数据库加载,先返回,下次收到报文再处理")
+		_,ok := unknownDevMap[sn]
+		if !ok {
+			logs.Error("设备找不到服务名,需要从数据库加载,先返回,下次收到报文再处理")
+		}
 		return nil
 	}
 
@@ -94,13 +97,17 @@ func FindBackendBySn(sn string)*Backend {
 	if !ok {
 		//未知设备冲击
 		//进行mysql查询更新map
-		//go FindAndUpdateBackendFromDb(sn)
+		go FindAndUpdateBackendFromDb(sn)
 		return nil
 	}
 	return &Backend{sn, svc}
 }
 
 func FindAndUpdateBackendFromDb(sn string)  {
+	_,ok := unknownDevMap[sn]
+	if ok {
+		return
+	}
 	backend := GetSvcNameBySn(sn)
 	if backend != "" {
 		devBackendMap[sn] = backend
@@ -108,11 +115,11 @@ func FindAndUpdateBackendFromDb(sn string)  {
 		return
 	}
 	//未知设备冲击
-	//backend = GetDefaultSvcName()
-	//if backend!="" {
-	//	devBackendMap[sn] = backend
-	//	logs.Info("找不到服务名，设置为默认服务名",sn,backend)
-	//}
+	backend = GetDefaultSvcName()
+	if backend!="" {
+		devBackendMap[sn] = backend
+		logs.Info("找不到服务名，设置为默认服务名",sn,backend)
+	}
 	return
 }
 

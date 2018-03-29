@@ -8,10 +8,17 @@ import (
 	"strings"
 )
 
+var unknownDevMap map[string]TblNeNa
+
 type TblNe struct {
 	ProductSns string
 	DomainUuid int
 	DomainName string
+}
+
+type TblNeNa struct {
+	Alias string
+	DomainUuid int
 }
 
 type TblSys struct {
@@ -36,6 +43,19 @@ func (TblDomain) TableName() string {
 
 func (TblNe) TableName() string {
 	return "tbl_ne"
+}
+
+func InitAllUnknownDevMap()   {
+	var list []TblNeNa
+	result := DB_DEV.Find(&list)
+	if result.Error!=nil {
+		logs.Error(result.Error)
+		return
+	}
+	unknownDevMap = make(map[string]TblNeNa)
+	for _,value  :=range list{
+		unknownDevMap[value.Alias] = value
+	}
 }
 
 func GetAllDevList() ([]TblNe,error)  {
@@ -205,6 +225,7 @@ func GetSvcNameBySn(sn string)string  {
 
 func InitDao()  {
 	InitDevBackendMap()
+	InitAllUnknownDevMap()
 }
 
 func main() {
