@@ -31,6 +31,7 @@ func GetUdpAddrFromAddr(addr string) *net.UDPAddr {
 		logs.Error(err)
 		return nil
 	}
+	svcMap[addr] = udpAddr
 	return udpAddr
 }
 
