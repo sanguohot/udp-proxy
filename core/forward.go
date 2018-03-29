@@ -36,7 +36,7 @@ type Forwarder struct {
 
 // DefaultTimeout is the default timeout period of inactivity for convenience
 // sake. It is equivelant to 5 minutes.
-var DefaultTimeout = time.Minute * 5
+var DefaultTimeout = time.Minute * 5 * 60
 
 // Forward forwards UDP packets from the src address to the dst address, with a
 // timeout to "disconnect" clients after the timeout period of inactivity. It
