@@ -5,6 +5,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	"net/http"
 	"fmt"
+	"time"
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
@@ -20,6 +21,7 @@ func main() {
 	logs.SetLogger(logs.AdapterConsole)
 	core.Init()
 	src := "0.0.0.0:4042"
+	time.Sleep(30*time.Second)
 	_, err := core.Forward(src, core.DefaultTimeout)
 	if err != nil {
 		logs.Error(err)
