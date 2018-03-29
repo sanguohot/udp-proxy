@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/astaxie/beego/logs"
 )
-const CONFIG_PATH = "./etc/config"
+const CONFIG_PATH = "./etc/config/config"
 
 type Config struct {
 	Mysql Mysql `json:"mysql,omitempty"`

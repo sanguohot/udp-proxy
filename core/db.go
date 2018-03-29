@@ -4,7 +4,6 @@ import (
 	"time"
 	"github.com/astaxie/beego/logs"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"fmt"
 )
 
