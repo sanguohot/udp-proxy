@@ -54,6 +54,11 @@ func GetAllDevList() ([]TblNe,error)  {
 
 func InitDevBackendMap()  {
 	logs.Info("正在初始化hashmap,可能耗时比较久,请耐心等候...")
+	defaultSvc := GetDefaultSvcName()
+	if defaultSvc == ""{
+		logs.Error("找不到默认服务，直接返回")
+		return
+	}
 	devList,err := GetAllDevList()
 	if err != nil {
 		return
@@ -69,6 +74,7 @@ func InitDevBackendMap()  {
 
 	for _,value  :=range devList{
 		domain, ok := domainMap[value.DomainName]
+		devBackendMap[value.ProductSns] = defaultSvc
 		if !ok {
 			continue
 		}
