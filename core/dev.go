@@ -63,7 +63,8 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 	}
 
 	dst := GetUdpAddrFromAddr(fmt.Sprintf("%s:%d", dstHost,defaultDstPort))
-	logs.Info("目标地址",dst,sn)
+	//未知设备的原因导致打印太多
+	//logs.Info("目标地址",dst,sn,len(stream))
 	return dst
 }
 
@@ -83,10 +84,6 @@ func FindSnByOffset(stream []byte)  string{
 	sn3 := snArr[6:8]
 	sn := fmt.Sprintf("%x-%x-%x-%x", sn0,sn1,sn2,sn3)
 	sn = strings.ToLower(sn)
-	_,ok := unknownDevMap[sn]
-	if !ok {
-		logs.Info("获取到原始设备序列号",sn)
-	}
 
 	//这里校验非常必要，因为有可能每个字节超出合法值
 	if !IsValidSn(sn) {

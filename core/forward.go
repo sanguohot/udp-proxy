@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const bufferSize = 1024 * 20
+const bufferSize = 1024 * 4
 
 type connection struct {
 	udp        *net.UDPConn
@@ -36,7 +36,7 @@ type Forwarder struct {
 
 // DefaultTimeout is the default timeout period of inactivity for convenience
 // sake. It is equivelant to 5 minutes.
-var DefaultTimeout = time.Minute * 5 * 60
+var DefaultTimeout = time.Minute * 5
 
 // Forward forwards UDP packets from the src address to the dst address, with a
 // timeout to "disconnect" clients after the timeout period of inactivity. It
@@ -120,14 +120,14 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	f.connectionsMutex.RUnlock()
 	//logs.Info("是否找到连接",found,"连接对象为",conn)
 	if !found {
-		conn, err := net.ListenUDP("udp", f.client)
-		if err != nil {
-			logs.Error("udp-forwader: failed to dial:", err)
+		dst := GetDstFromOffset(data)
+		if dst == nil {
 			return
 		}
 
-		dst := GetDstFromOffset(data)
-		if dst == nil {
+		conn, err := net.ListenUDP("udp", f.client)
+		if err != nil {
+			logs.Error("udp-forwader: failed to dial:", err)
 			return
 		}
 
@@ -141,11 +141,11 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 
 		f.connectCallback(addr.String())
 
-		_,err = conn.WriteTo(data, dst)
-		if err != nil {
-			logs.Error(err,"新建路的连接往服务器转发报文失败,直接返回")
-			return
-		}
+		conn.WriteTo(data, dst)
+		//if err != nil {
+		//	logs.Error(err,"新建路的连接往服务器转发报文失败,直接返回")
+		//	return
+		//}
 
 		for {
 			buf := make([]byte, bufferSize)
@@ -167,11 +167,11 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		return
 	}
 
-	_,err := conn.udp.WriteTo(data, conn.dst)
-	if err != nil {
-		logs.Error(err,"hashmap保存的连接往服务器转发报文失败，直接返回")
-		return
-	}
+	conn.udp.WriteTo(data, conn.dst)
+	//if err != nil {
+	//	logs.Error(err,"hashmap保存的连接往服务器转发报文失败，直接返回")
+	//	return
+	//}
 
 	shouldChangeTime := false
 	f.connectionsMutex.RLock()
