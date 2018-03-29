@@ -10,13 +10,13 @@ var svcMap  = make(map[string]*net.UDPAddr)
 
 func GetIpByDnsLookup(host string) string {
 	logs.SetLogger(logs.AdapterConsole)
-	hosts, err := net.LookupHost(host)
+	ips, err := net.LookupHost(host)
 	if err != nil {
 		logs.Error(err)
 		return ""
 	}
-	logs.Info(hosts)
-	return hosts[0]
+	logs.Info(host,"===>",ips)
+	return ips[0]
 }
 
 func GetUdpAddrFromAddr(addr string) *net.UDPAddr {
@@ -35,6 +35,6 @@ func GetUdpAddrFromAddr(addr string) *net.UDPAddr {
 	return udpAddr
 }
 
-func main()  {
-	GetIpByDnsLookup("baidu.com")
-}
+//func main()  {
+//	GetIpByDnsLookup("baidu.com")
+//}

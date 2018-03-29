@@ -3,7 +3,6 @@ package core
 
 import (
 	"net"
-	dao "udp-proxy/mysql"
 	"github.com/astaxie/beego/logs"
 	"fmt"
 	"regexp"
@@ -49,7 +48,7 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 
 	if backend.svc == "" {
 		//这里先发往默认服务,后续再优化
-		dstHost = dao.GetDefaultSvcName()
+		dstHost = GetDefaultSvcName()
 	}else {
 		dstHost = backend.svc
 	}
@@ -99,7 +98,7 @@ func FindBackendBySn(sn string)*Backend {
 }
 
 func FindAndUpdateBackendFromDb(sn string)  {
-	backend := dao.GetSvcNameBySn(sn)
+	backend := GetSvcNameBySn(sn)
 	if backend != "" {
 		devMap[sn] = backend
 		logs.Info("从数据库更新设备成功",sn,backend)

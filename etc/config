@@ -1,15 +1,10 @@
 {
-	 "log":{
-             "path":"/opt/log",
-             "maxAge":0,
-             "rotation":0
-      },
       "mysql":{
-              "name":"k8s-dmcldv1-master.dmcld.com",
+              "host":"k8s-dmcldv1-master.dmcld.com",
               "user":"root",
               "pass":"MTIzNDU2",
               "port":"3306",
-              "dbname":"dmcloud-v1"
-      },
-      "timeout":5
+              "db_all":"dmcld-v1-all",
+              "db":"dmcloud-v1"
+      }
 }

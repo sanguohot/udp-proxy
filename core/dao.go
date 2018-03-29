@@ -1,4 +1,4 @@
-package mysql
+package core
 
 import (
 	"time"
@@ -195,8 +195,20 @@ func InitConnection(path string) * gorm.DB{
 
 func InitDao()  {
 	logs.SetLogger(logs.AdapterConsole)
-	DB_DEV = InitConnection("root:MTIzNDU2@tcp(47.96.145.70:3306)/dmcld-v1-all")
-	DB_SVC = InitConnection("root:MTIzNDU2@tcp(47.96.145.70:3306)/dmcloud-v1")
+	config := OpenConfig.Mysql
+	ip := GetIpByDnsLookup(config.MysqlHost)
+	if ip == "" {
+		time.Sleep(60*time.Second)
+		InitDao()
+		return
+	}
+	path := fmt.Sprintf("%s:%s@tcp(%s:%s)/",config.MysqlUser,config.MysqlPass,ip,config.MysqlPort)
+	devPath := fmt.Sprintf("%s%s",path,config.MysqlDbAll)
+	svcPath := fmt.Sprintf("%s%s",path,config.MysqlDb)
+	//DB_DEV = InitConnection("root:MTIzNDU2@tcp(47.96.145.70:3306)/dmcld-v1-all")
+	//DB_SVC = InitConnection("root:MTIzNDU2@tcp(47.96.145.70:3306)/dmcloud-v1")
+	DB_DEV = InitConnection(devPath)
+	DB_SVC = InitConnection(svcPath)
 }
 
 func main() {

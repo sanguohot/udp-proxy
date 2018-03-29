@@ -3,7 +3,6 @@ package main
 import (
 	core "udp-proxy/core"
 	"github.com/astaxie/beego/logs"
-	dao "udp-proxy/mysql"
 	"net/http"
 	"fmt"
 )
@@ -19,7 +18,8 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	// Forward(src, dst). It's asynchronous.
 	logs.SetLogger(logs.AdapterConsole)
-	dao.InitDao()
+	core.InitConfig()
+	core.InitDao()
 	core.InitDev()
 	src := "0.0.0.0:4042"
 	_, err := core.Forward(src, core.DefaultTimeout)
