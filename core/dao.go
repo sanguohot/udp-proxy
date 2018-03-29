@@ -83,7 +83,7 @@ func InitDevBackendMap()  {
 			continue
 		}
 		devBackendMap[value.ProductSns] = sys.SvcName
-		logs.Info(value.ProductSns,devBackendMap[value.ProductSns])
+		//logs.Info(value.ProductSns,devBackendMap[value.ProductSns])
 	}
 	logs.Info("hashmap初始化完成")
 }
@@ -94,10 +94,10 @@ func GetAllDomainMap() (map[string]TblDomain,error)   {
 		logs.Error(result.Error)
 		return nil,result.Error
 	}
-	if  result.RecordNotFound() {
-		logs.Error("域表没有任何域")
-		return nil,errors.New("查询结果为空")
-	}
+	//if  result.RecordNotFound() {
+	//	logs.Error("域表没有任何域")
+	//	return nil,errors.New("查询结果为空")
+	//}
 	fmt.Println(list)
 	var m = make(map[string]TblDomain)
 	for _,value  :=range list{
@@ -114,10 +114,10 @@ func GetAllSysMap() (map[string]TblSys,error)   {
 		logs.Error(result.Error)
 		return nil,result.Error
 	}
-	if  result.RecordNotFound() {
-		logs.Error("sys表没有任何sys")
-		return nil,errors.New("查询结果为空")
-	}
+	//if  result.RecordNotFound() {
+	//	logs.Error("sys表没有任何sys")
+	//	return nil,errors.New("查询结果为空")
+	//}
 	var m = make(map[string]TblSys)
 	for _,value  :=range list{
 		m[value.Uuid] = value
