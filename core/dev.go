@@ -104,6 +104,12 @@ func FindAndUpdateBackendFromDb(sn string)  {
 		logs.Info("从数据库更新设备成功",sn,backend)
 		return
 	}
+	backend = GetDefaultSvcName()
+	if backend!="" {
+		devBackendMap[sn] = backend
+		logs.Info("找不到服务名，设置为默认服务名",sn,backend)
+	}
+	return
 }
 
 func InitDev()  {
