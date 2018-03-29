@@ -24,6 +24,7 @@ const (
 
 var (
 	devBackendMap  = make(map[string]string)
+	notFoundMap = make(map[string]int)
 )
 
 func IsValidSn(sn string)bool  {
@@ -38,30 +39,22 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 	var dstHost string
 	sn := FindSnByOffset(stream)
 	if sn == "" {
-		logs.Error("找不到合法的设备序列号,直接返回")
 		return nil
 	}
 	backend := FindBackendBySn(sn)
 	if backend == nil {
-		_,ok := unknownDevMap[sn]
-		if !ok {
-			logs.Error("设备找不到服务名,需要从数据库加载,先返回,下次收到报文再处理",sn)
-		}
 		return nil
 	}
-
 	if backend.svc == "" {
 		//这里先发往默认服务,后续再优化
 		dstHost = GetDefaultSvcName()
 	}else {
 		dstHost = backend.svc
 	}
-
 	if dstHost == "" {
 		logs.Error("找不到服务")
 		return nil
 	}
-
 	dst := GetUdpAddrFromAddr(fmt.Sprintf("%s:%d", dstHost,defaultDstPort))
 	//未知设备的原因导致打印太多
 	//logs.Info("目标地址",dst,sn,len(stream))
@@ -72,11 +65,10 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 func FindSnByOffset(stream []byte)  string{
 	//hexStr := fmt.Sprintf("%x", stream)
 	length := len(stream)
-	if length<REGISTER_MSG_SN_LEN {
+	if length<REGISTER_MSG_SN_LEN+REGISTER_MSG_SN_OFFSET {
 		logs.Error("非法报文长度",length,fmt.Sprintf("%x", stream))
 		return ""
 	}
-
 	snArr := stream[REGISTER_MSG_HEAD_LEN+REGISTER_MSG_SN_OFFSET : REGISTER_MSG_HEAD_LEN+REGISTER_MSG_SN_OFFSET+REGISTER_MSG_SN_LEN]
 	sn0 := snArr[0:2]
 	sn1 := snArr[2:4]
@@ -84,9 +76,9 @@ func FindSnByOffset(stream []byte)  string{
 	sn3 := snArr[6:8]
 	sn := fmt.Sprintf("%x-%x-%x-%x", sn0,sn1,sn2,sn3)
 	sn = strings.ToLower(sn)
-
 	//这里校验非常必要，因为有可能每个字节超出合法值
 	if !IsValidSn(sn) {
+		logs.Error("非法设备序列号",sn)
 		return ""
 	}
 	return sn
