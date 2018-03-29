@@ -5,6 +5,7 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"fmt"
 	"errors"
+	"strings"
 )
 
 type TblNe struct {
@@ -73,7 +74,8 @@ func InitDevBackendMap()  {
 	}
 
 	for _,value  :=range devList{
-		devBackendMap[value.ProductSns] = defaultSvc
+		sn := strings.ToLower(value.ProductSns)
+		devBackendMap[sn] = defaultSvc
 		domain, ok := domainMap[value.DomainName]
 		if !ok {
 			continue
@@ -82,7 +84,7 @@ func InitDevBackendMap()  {
 		if !ok {
 			continue
 		}
-		devBackendMap[value.ProductSns] = sys.SvcName
+		devBackendMap[sn] = sys.SvcName
 		//logs.Info(value.ProductSns,devBackendMap[value.ProductSns])
 	}
 	logs.Info("hashmap初始化完成")

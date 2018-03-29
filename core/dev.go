@@ -6,6 +6,7 @@ import (
 	"github.com/astaxie/beego/logs"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 type Backend struct {
@@ -79,6 +80,7 @@ func FindSnByOffset(stream []byte)  string{
 	sn2 := snArr[4:6]
 	sn3 := snArr[6:8]
 	sn := fmt.Sprintf("%x-%x-%x-%x", sn0,sn1,sn2,sn3)
+	sn = strings.ToLower(sn)
 	logs.Info("获取到原始设备序列号",sn)
 	//这里校验非常必要，因为有可能每个字节超出合法值
 	if !IsValidSn(sn) {
