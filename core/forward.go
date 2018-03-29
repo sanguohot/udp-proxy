@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const bufferSize = 4096
+const bufferSize = 1024 * 20
 
 type connection struct {
 	udp        *net.UDPConn
@@ -80,7 +80,7 @@ func (f *Forwarder) run() {
 		buf := make([]byte, bufferSize)
 		n, addr, err := f.listenerConn.ReadFromUDP(buf)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(err,"读取客户端报文出错，直接返回")
 			return
 		}
 		//logs.Info("收到报文",addr)
@@ -143,7 +143,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 
 		_,err = conn.WriteTo(data, dst)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(err,"新建路的连接往服务器转发报文失败,直接返回")
 			return
 		}
 
@@ -151,7 +151,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 			buf := make([]byte, bufferSize)
 			n, _, err := conn.ReadFromUDP(buf)
 			if err != nil {
-				logs.Error(err)
+				logs.Error(err,"即将关闭连接，并清除hashmap记录")
 				f.connectionsMutex.Lock()
 				conn.Close()
 				delete(f.connections, addr.String())
@@ -169,7 +169,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 
 	_,err := conn.udp.WriteTo(data, conn.dst)
 	if err != nil {
-		logs.Error(err)
+		logs.Error(err,"hashmap保存的连接往服务器转发报文失败，直接返回")
 		return
 	}
 
