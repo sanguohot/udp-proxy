@@ -6,6 +6,8 @@ import (
 	"github.com/astaxie/beego/logs"
 )
 
+var svcMap  = make(map[string]*net.UDPAddr)
+
 func GetIpByDnsLookup(host string) string {
 	logs.SetLogger(logs.AdapterConsole)
 	hosts, err := net.LookupHost(host)
@@ -15,6 +17,21 @@ func GetIpByDnsLookup(host string) string {
 	}
 	logs.Info(hosts)
 	return hosts[0]
+}
+
+func GetUdpAddrFromAddr(addr string) *net.UDPAddr {
+	var err error
+	udpAddr, ok := svcMap[addr]
+	if ok {
+		return udpAddr
+	}
+	logs.Error("hash map 找不到地址",addr,"进行dns查询")
+	udpAddr, err = net.ResolveUDPAddr("udp", addr)
+	if err != nil {
+		logs.Error(err)
+		return nil
+	}
+	return udpAddr
 }
 
 func main()  {

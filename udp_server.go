@@ -17,7 +17,7 @@ func write(conn *net.UDPConn,remoteAddr *net.UDPAddr,data []byte)  {
 }
 func read(conn *net.UDPConn) {
 	for {
-		data := make([]byte, 1024)
+		data := make([]byte, 4096)
 		n, remoteAddr, err := conn.ReadFromUDP(data)
 		if err != nil {
 			fmt.Printf("error during read: %s", err)

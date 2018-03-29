@@ -14,12 +14,17 @@ type Backend struct {
 	svc string
 }
 
-const defaultDstPort = 2022
-const REGISTER_MSG_LEN = 1308
-const REGISTER_MSG_SN_OFFSET = 12
-const REGISTER_MSG_SN_LEN = 8
-const REGISTER_MSG_HEAD_LEN = 0
-var v  = make(map[string]string)
+const (
+	defaultDstPort = 2022
+	REGISTER_MSG_LEN = 1308
+	REGISTER_MSG_SN_OFFSET = 12
+	REGISTER_MSG_SN_LEN = 8
+	REGISTER_MSG_HEAD_LEN = 0
+)
+
+var (
+	devMap  = make(map[string]string)
+)
 
 func IsValidSn(sn string)bool  {
 	re:= regexp.MustCompile("[a-fA-F0-9]{4}(-)[a-fA-F0-9]{4}(-)[a-fA-F0-9]{4}(-)[a-fA-F0-9]{4}")
@@ -54,21 +59,22 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 		return nil
 	}
 
-	ip := GetIpByDnsLookup(dstHost)
-	if ip == "" {
-		return nil
-	}
-	IP := net.ParseIP(ip)
-	if IP == nil {
-		logs.Error("ip地址非法",ip)
-		return nil
-	}
-	dst := net.UDPAddr{
-		IP: IP,
-		Port: defaultDstPort,
-	}
+	//ip := GetIpByDnsLookup(dstHost)
+	//if ip == "" {
+	//	return nil
+	//}
+	//IP := net.ParseIP(ip)
+	//if IP == nil {
+	//	logs.Error("ip地址非法",ip)
+	//	return nil
+	//}
+	//dst := net.UDPAddr{
+	//	IP: IP,
+	//	Port: defaultDstPort,
+	//}
+	dst := GetUdpAddrFromAddr(fmt.Sprintf("%s:%d", dstHost,defaultDstPort))
 	logs.Info("目标地址",dst)
-	return &dst
+	return dst
 }
 
 //从报文中解析出sn，要求该报文是为注册报文
@@ -76,7 +82,7 @@ func FindSnByOffset(stream []byte)  string{
 	//hexStr := fmt.Sprintf("%x", stream)
 	length := len(stream)
 	//这里需要再偏移两个字节
-	if length != REGISTER_MSG_LEN+REGISTER_MSG_HEAD_LEN {
+	if length<REGISTER_MSG_SN_LEN || length>REGISTER_MSG_LEN {
 		logs.Error("非法注册报文长度",length,fmt.Sprintf("%x", stream))
 		return ""
 	}
@@ -96,7 +102,7 @@ func FindSnByOffset(stream []byte)  string{
 }
 
 func FindBackendBySn(sn string)*Backend {
-	svc, ok := v[sn]
+	svc, ok := devMap[sn]
 	if !ok {
 		//进行mysql查询更新map
 		go FindAndUpdateBackendFromDb(sn)
@@ -108,7 +114,7 @@ func FindBackendBySn(sn string)*Backend {
 func FindAndUpdateBackendFromDb(sn string)  {
 	backend := dao.GetSvcNameBySn(sn)
 	if backend != "" {
-		v[sn] = backend
+		devMap[sn] = backend
 		logs.Info("从数据库更新设备成功",sn,backend)
 		return
 	}
