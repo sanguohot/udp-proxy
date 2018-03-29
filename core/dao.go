@@ -37,6 +37,10 @@ func (TblSys) TableName() string {
 	return "tbl_sys"
 }
 
+func (TblNeNa) TableName() string {
+	return "TblNeNa"
+}
+
 func (TblDomain) TableName() string {
 	return "tbl_domain"
 }
