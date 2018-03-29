@@ -58,7 +58,8 @@ func InitAllUnknownDevMap()   {
 	}
 	unknownDevMap = make(map[string]TblNeNa)
 	for _,value  :=range list{
-		unknownDevMap[value.Alias] = value
+		sn := strings.ToLower(value.Alias)
+		unknownDevMap[sn] = value
 	}
 }
 

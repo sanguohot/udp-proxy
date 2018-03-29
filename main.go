@@ -21,7 +21,7 @@ func main() {
 	logs.SetLogger(logs.AdapterConsole)
 	core.Init()
 	src := "0.0.0.0:4042"
-	time.Sleep(30*time.Second)
+	time.Sleep(10*time.Second)
 	_, err := core.Forward(src, core.DefaultTimeout)
 	if err != nil {
 		logs.Error(err)
