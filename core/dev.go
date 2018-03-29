@@ -14,7 +14,7 @@ type Backend struct {
 }
 
 const (
-	defaultDstPort = 2022
+	defaultDstPort = 12022
 	REGISTER_MSG_LEN = 1308
 	REGISTER_MSG_SN_OFFSET = 12
 	REGISTER_MSG_SN_LEN = 8
