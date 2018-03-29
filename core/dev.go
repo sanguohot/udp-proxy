@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	devMap  = make(map[string]string)
+	devBackendMap  = make(map[string]string)
 )
 
 func IsValidSn(sn string)bool  {
@@ -88,7 +88,7 @@ func FindSnByOffset(stream []byte)  string{
 }
 
 func FindBackendBySn(sn string)*Backend {
-	svc, ok := devMap[sn]
+	svc, ok := devBackendMap[sn]
 	if !ok {
 		//进行mysql查询更新map
 		go FindAndUpdateBackendFromDb(sn)
@@ -100,7 +100,7 @@ func FindBackendBySn(sn string)*Backend {
 func FindAndUpdateBackendFromDb(sn string)  {
 	backend := GetSvcNameBySn(sn)
 	if backend != "" {
-		devMap[sn] = backend
+		devBackendMap[sn] = backend
 		logs.Info("从数据库更新设备成功",sn,backend)
 		return
 	}
@@ -110,6 +110,6 @@ func InitDev()  {
 	logs.SetLogger(logs.AdapterConsole)
 	//domainMap := dao.GetAllDomain()
 	//sysMap := dao.GetAllSys()
-	//devMap := dao.GetAllDev()
-	//logs.Info(domainMap,sysMap,devMap)
+	//devBackendMap := dao.GetAllDev()
+	//logs.Info(domainMap,sysMap,devBackendMap)
 }

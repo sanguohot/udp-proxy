@@ -1,15 +1,11 @@
 package core
 
 import (
-	"time"
 	"github.com/astaxie/beego/logs"
-	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"fmt"
+	"errors"
 )
-
-var DB_DEV *gorm.DB
-var DB_SVC *gorm.DB
 
 type TblNe struct {
 	ProductSns string
@@ -41,35 +37,59 @@ func (TblNe) TableName() string {
 	return "tbl_ne"
 }
 
-func GetAllDev() map[string]TblNe  {
+func GetAllDevList() ([]TblNe,error)  {
 	var list []TblNe
-	result := DB_DEV.Select(&list)
+	result := DB_DEV.Find(&list)
 	if result.Error!=nil {
 		logs.Error(result.Error)
-		return nil
+		return nil,result.Error
 	}
 	if  result.RecordNotFound() {
 		logs.Error("设备表没有任何设备")
-		return nil
-	}
-	var m = make(map[string]TblNe)
-	for _,value  :=range list{
-		m[value.ProductSns] = value
+		return nil,errors.New("查询结果为空")
 	}
 
-	return m
+	return list,nil
 }
 
-func GetAllDomain() map[string]TblDomain  {
+func InitDevBackendMap()  {
+	logs.Info("正在初始化hashmap,可能耗时比较久,请耐心等候...")
+	devList,err := GetAllDevList()
+	if err != nil {
+		return
+	}
+	domainMap,err := GetAllDomainMap()
+	if err != nil {
+		return
+	}
+	sysMap,err := GetAllSysMap()
+	if err != nil {
+		return
+	}
+
+	for _,value  :=range devList{
+		domain, ok := domainMap[value.DomainName]
+		if !ok {
+			continue
+		}
+		sys,ok := sysMap[domain.SysUuid]
+		if !ok {
+			continue
+		}
+		devBackendMap[value.ProductSns] = sys.SvcName
+	}
+	logs.Info("hashmap初始化完成")
+}
+func GetAllDomainMap() (map[string]TblDomain,error)   {
 	var list []TblDomain
-	result := DB_SVC.Where("uuid is not null").Select(&list)
+	result := DB_SVC.Find(&list)
 	if result.Error!=nil {
 		logs.Error(result.Error)
-		return nil
+		return nil,result.Error
 	}
 	if  result.RecordNotFound() {
 		logs.Error("域表没有任何域")
-		return nil
+		return nil,errors.New("查询结果为空")
 	}
 	fmt.Println(list)
 	var m = make(map[string]TblDomain)
@@ -77,26 +97,26 @@ func GetAllDomain() map[string]TblDomain  {
 		m[value.Name] = value
 	}
 
-	return m
+	return m,nil
 }
 
-func GetAllSys() map[string]TblSys  {
+func GetAllSysMap() (map[string]TblSys,error)   {
 	var list []TblSys
-	result := DB_SVC.Select(&list)
+	result := DB_SVC.Find(&list)
 	if result.Error!=nil {
 		logs.Error(result.Error)
-		return nil
+		return nil,result.Error
 	}
 	if  result.RecordNotFound() {
 		logs.Error("sys表没有任何sys")
-		return nil
+		return nil,errors.New("查询结果为空")
 	}
 	var m = make(map[string]TblSys)
 	for _,value  :=range list{
 		m[value.Uuid] = value
 	}
 
-	return m
+	return m,nil
 }
 
 func GetDevBySn(ProductSn string) *TblNe {
@@ -174,45 +194,12 @@ func GetSvcNameBySn(sn string)string  {
 	return sys.SvcName
 }
 
-func InitConnection(path string) * gorm.DB{
-	var err error
-	var db *gorm.DB
-	db, err = gorm.Open("mysql", path+"?charset=utf8&parseTime=True&loc=Local")
-	db.LogMode(true)
-	db.DB().Ping()
-	db.DB().SetMaxIdleConns(10)
-	db.DB().SetMaxOpenConns(100)
-	if  err!=nil{
-		logs.Error(err)
-		time.Sleep(60*time.Second)
-		InitConnection(path)
-		return nil
-	}
-
-	logs.Info("初始化mysql连接成功",path)
-	return db
-}
-
 func InitDao()  {
-	logs.SetLogger(logs.AdapterConsole)
-	config := OpenConfig.Mysql
-	ip := GetIpByDnsLookup(config.MysqlHost)
-	if ip == "" {
-		time.Sleep(60*time.Second)
-		InitDao()
-		return
-	}
-	path := fmt.Sprintf("%s:%s@tcp(%s:%s)/",config.MysqlUser,config.MysqlPass,ip,config.MysqlPort)
-	devPath := fmt.Sprintf("%s%s",path,config.MysqlDbAll)
-	svcPath := fmt.Sprintf("%s%s",path,config.MysqlDb)
-	//DB_DEV = InitConnection("root:MTIzNDU2@tcp(47.96.145.70:3306)/dmcld-v1-all")
-	//DB_SVC = InitConnection("root:MTIzNDU2@tcp(47.96.145.70:3306)/dmcloud-v1")
-	DB_DEV = InitConnection(devPath)
-	DB_SVC = InitConnection(svcPath)
+	InitDevBackendMap()
 }
 
 func main() {
 	logs.SetLogger(logs.AdapterConsole)
-	InitDao()
+	InitDb()
 	logs.Info(GetSvcNameBySn("da00-0040-8800-0218"))
 }
