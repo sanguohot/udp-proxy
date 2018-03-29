@@ -71,7 +71,6 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 func FindSnByOffset(stream []byte)  string{
 	//hexStr := fmt.Sprintf("%x", stream)
 	length := len(stream)
-	//这里需要再偏移两个字节
 	if length<REGISTER_MSG_SN_LEN {
 		logs.Error("非法报文长度",length,fmt.Sprintf("%x", stream))
 		return ""
@@ -97,7 +96,7 @@ func FindBackendBySn(sn string)*Backend {
 	if !ok {
 		//未知设备冲击
 		//进行mysql查询更新map
-		go FindAndUpdateBackendFromDb(sn)
+		//go FindAndUpdateBackendFromDb(sn)
 		return nil
 	}
 	return &Backend{sn, svc}
