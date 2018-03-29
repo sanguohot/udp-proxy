@@ -43,7 +43,7 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 	}
 	backend := FindBackendBySn(sn)
 	if backend == nil {
-		logs.Error("设备找不到服务名,可能需要从内存加载,先返回")
+		logs.Error("设备找不到服务名,需要从数据库加载,先返回,下次收到报文再处理")
 		return nil
 	}
 
@@ -59,19 +59,6 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 		return nil
 	}
 
-	//ip := GetIpByDnsLookup(dstHost)
-	//if ip == "" {
-	//	return nil
-	//}
-	//IP := net.ParseIP(ip)
-	//if IP == nil {
-	//	logs.Error("ip地址非法",ip)
-	//	return nil
-	//}
-	//dst := net.UDPAddr{
-	//	IP: IP,
-	//	Port: defaultDstPort,
-	//}
 	dst := GetUdpAddrFromAddr(fmt.Sprintf("%s:%d", dstHost,defaultDstPort))
 	logs.Info("目标地址",dst)
 	return dst

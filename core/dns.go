@@ -28,7 +28,7 @@ func GetUdpAddrFromAddr(addr string) *net.UDPAddr {
 	logs.Error("hash map 找不到地址",addr,"进行dns查询")
 	udpAddr, err = net.ResolveUDPAddr("udp", addr)
 	if err != nil {
-		logs.Error(err)
+		logs.Error(err,addr)
 		return nil
 	}
 	svcMap[addr] = udpAddr
