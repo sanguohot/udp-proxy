@@ -38,7 +38,7 @@ func (TblSys) TableName() string {
 }
 
 func (TblNeNa) TableName() string {
-	return "TblNeNa"
+	return "tbl_ne_na"
 }
 
 func (TblDomain) TableName() string {
