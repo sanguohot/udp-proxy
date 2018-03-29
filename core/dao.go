@@ -73,8 +73,8 @@ func InitDevBackendMap()  {
 	}
 
 	for _,value  :=range devList{
-		domain, ok := domainMap[value.DomainName]
 		devBackendMap[value.ProductSns] = defaultSvc
+		domain, ok := domainMap[value.DomainName]
 		if !ok {
 			continue
 		}
@@ -83,6 +83,7 @@ func InitDevBackendMap()  {
 			continue
 		}
 		devBackendMap[value.ProductSns] = sys.SvcName
+		logs.Info(value.ProductSns,devBackendMap[value.ProductSns])
 	}
 	logs.Info("hashmap初始化完成")
 }
