@@ -45,7 +45,7 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 	if backend == nil {
 		_,ok := unknownDevMap[sn]
 		if !ok {
-			logs.Error("设备找不到服务名,需要从数据库加载,先返回,下次收到报文再处理")
+			logs.Error("设备找不到服务名,需要从数据库加载,先返回,下次收到报文再处理",sn)
 		}
 		return nil
 	}
@@ -63,7 +63,7 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 	}
 
 	dst := GetUdpAddrFromAddr(fmt.Sprintf("%s:%d", dstHost,defaultDstPort))
-	logs.Info("目标地址",dst)
+	logs.Info("目标地址",dst,sn)
 	return dst
 }
 
@@ -83,7 +83,11 @@ func FindSnByOffset(stream []byte)  string{
 	sn3 := snArr[6:8]
 	sn := fmt.Sprintf("%x-%x-%x-%x", sn0,sn1,sn2,sn3)
 	sn = strings.ToLower(sn)
-	logs.Info("获取到原始设备序列号",sn)
+	_,ok := unknownDevMap[sn]
+	if !ok {
+		logs.Info("获取到原始设备序列号",sn)
+	}
+
 	//这里校验非常必要，因为有可能每个字节超出合法值
 	if !IsValidSn(sn) {
 		return ""
