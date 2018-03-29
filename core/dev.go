@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"errors"
 )
 
 type Backend struct {
@@ -35,15 +36,15 @@ func IsValidSn(sn string)bool  {
 	return false
 }
 
-func GetDstFromOffset(stream []byte) *net.UDPAddr  {
+func GetDstAndSnFromOffset(stream []byte) (*net.UDPAddr,string,error)  {
 	var dstHost string
 	sn := FindSnByOffset(stream)
 	if sn == "" {
-		return nil
+		return nil,"",errors.New("sn not found")
 	}
 	backend := FindBackendBySn(sn)
 	if backend == nil {
-		return nil
+		return nil,"",errors.New("backend not found")
 	}
 	if backend.svc == "" {
 		//这里先发往默认服务,后续再优化
@@ -53,12 +54,15 @@ func GetDstFromOffset(stream []byte) *net.UDPAddr  {
 	}
 	if dstHost == "" {
 		logs.Error("找不到服务")
-		return nil
+		return nil,"",errors.New("svc not found")
 	}
-	dst := GetUdpAddrFromAddr(fmt.Sprintf("%s:%d", dstHost,defaultDstPort))
+	dst,err := GetUdpAddrFromAddr(fmt.Sprintf("%s:%d", dstHost,defaultDstPort))
+	if err != nil {
+		return nil,"",err
+	}
 	//未知设备的原因导致打印太多
 	//logs.Info("目标地址",dst,sn,len(stream))
-	return dst
+	return dst,sn,nil
 }
 
 //从报文中解析出sn，要求该报文是为注册报文

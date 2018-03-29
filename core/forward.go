@@ -36,7 +36,7 @@ type Forwarder struct {
 
 // DefaultTimeout is the default timeout period of inactivity for convenience
 // sake. It is equivelant to 5 minutes.
-var DefaultTimeout = time.Minute * 5
+var DefaultTimeout = time.Minute * 2
 
 // Forward forwards UDP packets from the src address to the dst address, with a
 // timeout to "disconnect" clients after the timeout period of inactivity. It
@@ -120,8 +120,8 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	f.connectionsMutex.RUnlock()
 	//logs.Info("是否找到连接",found,"连接对象为",conn)
 	if !found {
-		dst := GetDstFromOffset(data)
-		if dst == nil {
+		dst,sn,err := GetDstAndSnFromOffset(data)
+		if err != nil {
 			return
 		}
 
@@ -151,7 +151,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 			buf := make([]byte, bufferSize)
 			n, _, err := conn.ReadFromUDP(buf)
 			if err != nil {
-				logs.Error(err,"即将关闭连接，并清除hashmap记录")
+				logs.Error(err,"即将关闭连接，并清除hashmap记录",sn)
 				f.connectionsMutex.Lock()
 				conn.Close()
 				delete(f.connections, addr.String())
@@ -175,9 +175,15 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 
 	shouldChangeTime := false
 	f.connectionsMutex.RLock()
+	//if _, found := f.connections[addr.String()]; found {
+	//	if f.connections[addr.String()].lastActive.Before(
+	//		time.Now().Add(f.timeout / 4)) {
+	//		shouldChangeTime = true
+	//	}
+	//}
 	if _, found := f.connections[addr.String()]; found {
-		if f.connections[addr.String()].lastActive.Before(
-			time.Now().Add(f.timeout / 4)) {
+		if f.connections[addr.String()].lastActive.After(
+			time.Now().Add(-f.timeout/2)) {
 			shouldChangeTime = true
 		}
 	}

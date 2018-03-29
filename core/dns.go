@@ -19,20 +19,27 @@ func GetIpByDnsLookup(host string) string {
 	return ips[0]
 }
 
-func GetUdpAddrFromAddr(addr string) *net.UDPAddr {
-	var err error
+func GetUdpAddrFromAddr(addr string) (*net.UDPAddr,error) {
 	udpAddr, ok := svcMap[addr]
 	if ok {
-		return udpAddr
+		return udpAddr,nil
 	}
 	logs.Error("hash map 找不到地址",addr,"进行dns查询")
-	udpAddr, err = net.ResolveUDPAddr("udp", addr)
+	udpAddr,err := ResolveAndSetUdpAddrToAddr(addr)
+	if err != nil {
+		return nil,err
+	}
+	return udpAddr,nil
+}
+
+func ResolveAndSetUdpAddrToAddr(addr string) (*net.UDPAddr,error) {
+	udpAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		logs.Error(err,addr)
-		return nil
+		return nil,err
 	}
 	svcMap[addr] = udpAddr
-	return udpAddr
+	return udpAddr,nil
 }
 
 //func main()  {

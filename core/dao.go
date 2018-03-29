@@ -8,7 +8,10 @@ import (
 	"strings"
 )
 
-var unknownDevMap map[string]TblNeNa
+var (
+	unknownDevMap map[string]TblNeNa
+	defaultSvcName string
+)
 
 type TblNe struct {
 	ProductSns string
@@ -93,7 +96,7 @@ func InitDevBackendMap()  {
 	if err != nil {
 		return
 	}
-	sysMap,err := GetAllSysMap()
+	sysMap,err := GetAllSysMapAndResolveSvcAddr()
 	if err != nil {
 		return
 	}
@@ -134,7 +137,7 @@ func GetAllDomainMap() (map[string]TblDomain,error)   {
 	return m,nil
 }
 
-func GetAllSysMap() (map[string]TblSys,error)   {
+func GetAllSysMapAndResolveSvcAddr() (map[string]TblSys,error)   {
 	var list []TblSys
 	result := DB_SVC.Find(&list)
 	if result.Error!=nil {
@@ -148,6 +151,7 @@ func GetAllSysMap() (map[string]TblSys,error)   {
 	var m = make(map[string]TblSys)
 	for _,value  :=range list{
 		m[value.Uuid] = value
+		ResolveAndSetUdpAddrToAddr(fmt.Sprintf("%s:%d",value.SvcName,defaultDstPort))
 	}
 
 	return m,nil
@@ -168,6 +172,9 @@ func GetDevBySn(ProductSn string) *TblNe {
 }
 
 func GetDefaultSvcName() string {
+	if defaultSvcName != "" {
+		return defaultSvcName
+	}
 	var t TblSys
 	record:=DB_SVC.Where("default_flag = ?",1).First(&t)
 	if  record.RecordNotFound() {
@@ -178,6 +185,7 @@ func GetDefaultSvcName() string {
 		logs.Error(record.Error)
 		return ""
 	}
+	defaultSvcName = t.SvcName
 	return t.SvcName
 }
 func GetDomainByDomainName(name string) *TblDomain {
@@ -231,6 +239,7 @@ func GetSvcNameBySn(sn string)string  {
 func InitDao()  {
 	InitDevBackendMap()
 	InitAllUnknownDevMap()
+	GetDefaultSvcName()
 }
 
 func main() {
