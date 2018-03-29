@@ -92,8 +92,9 @@ func FindSnByOffset(stream []byte)  string{
 func FindBackendBySn(sn string)*Backend {
 	svc, ok := devBackendMap[sn]
 	if !ok {
+		//未知设备冲击
 		//进行mysql查询更新map
-		go FindAndUpdateBackendFromDb(sn)
+		//go FindAndUpdateBackendFromDb(sn)
 		return nil
 	}
 	return &Backend{sn, svc}
@@ -106,6 +107,7 @@ func FindAndUpdateBackendFromDb(sn string)  {
 		logs.Info("从数据库更新设备成功",sn,backend)
 		return
 	}
+	//未知设备冲击
 	//backend = GetDefaultSvcName()
 	//if backend!="" {
 	//	devBackendMap[sn] = backend
