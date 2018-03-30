@@ -9,7 +9,7 @@ RUN ls -al $GOPATH/src/udp-proxy/core
 RUN ls -al /opt/udp
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main -v main.go
 
-FROM scratch
+FROM alpine:3.7
 ENV GODEBUG=netdns=go
 COPY ca-certificates.crt /etc/ssl/certs/
 WORKDIR /root/
