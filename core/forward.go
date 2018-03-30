@@ -147,7 +147,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		//	return
 		//}
 
-		for {
+		for conn != nil {
 			buf := make([]byte, bufferSize)
 			n, _, err := conn.ReadFromUDP(buf)
 			if err != nil {
@@ -155,6 +155,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 				f.connectionsMutex.Lock()
 				conn.Close()
 				delete(f.connections, addr.String())
+				conn = nil
 				f.connectionsMutex.Unlock()
 				return
 			}
