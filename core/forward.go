@@ -36,7 +36,7 @@ type Forwarder struct {
 
 // DefaultTimeout is the default timeout period of inactivity for convenience
 // sake. It is equivelant to 5 minutes.
-var DefaultTimeout = time.Minute * 2
+var DefaultTimeout = time.Minute * 1
 
 // Forward forwards UDP packets from the src address to the dst address, with a
 // timeout to "disconnect" clients after the timeout period of inactivity. It
@@ -184,7 +184,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	//}
 	if _, found := f.connections[addr.String()]; found {
 		if f.connections[addr.String()].lastActive.After(
-			time.Now().Add(-f.timeout/2)) {
+			time.Now().Add(-f.timeout)) {
 			shouldChangeTime = true
 		}
 	}
