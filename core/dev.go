@@ -16,7 +16,6 @@ type Backend struct {
 }
 
 const (
-	defaultDstPort = 12022
 	REGISTER_MSG_LEN = 1308
 	REGISTER_MSG_SN_OFFSET = 12
 	REGISTER_MSG_SN_LEN = 8
@@ -56,7 +55,7 @@ func GetDstAndSnFromOffset(stream []byte) (*net.UDPAddr,string,error)  {
 		logs.Error("找不到服务")
 		return nil,"",errors.New("svc not found")
 	}
-	dst,err := GetUdpAddrFromAddr(fmt.Sprintf("%s:%d", dstHost,defaultDstPort))
+	dst,err := GetUdpAddrFromAddr(fmt.Sprintf("%s:%d", dstHost,OpenConfig.DefaultSvcPort))
 	if err != nil {
 		return nil,"",err
 	}

@@ -9,6 +9,7 @@ const CONFIG_PATH = "/etc/config/config"
 
 type Config struct {
 	Mysql Mysql `json:"mysql,omitempty"`
+	DefaultSvcPort string  `json:"default_svc_port,omitempty"`
 }
 type Mysql struct {
 	MysqlHost string  `json:"host,omitempty"`

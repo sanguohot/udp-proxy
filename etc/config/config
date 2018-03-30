@@ -6,5 +6,6 @@
               "port":"3306",
               "db_all":"dmcld-v1-all",
               "db":"dmcloud-v1"
-      }
+      },
+      "default_svc_port":"2022"
 }

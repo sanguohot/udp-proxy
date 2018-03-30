@@ -151,7 +151,7 @@ func GetAllSysMapAndResolveSvcAddr() (map[string]TblSys,error)   {
 	var m = make(map[string]TblSys)
 	for _,value  :=range list{
 		m[value.Uuid] = value
-		ResolveAndSetUdpAddrToAddr(fmt.Sprintf("%s:%d",value.SvcName,defaultDstPort))
+		ResolveAndSetUdpAddrToAddr(fmt.Sprintf("%s:%d",value.SvcName,OpenConfig.DefaultSvcPort))
 	}
 
 	return m,nil
