@@ -83,8 +83,7 @@ func GetAllDevList() ([]TblNe,error)  {
 
 func InitDevBackendMap()  {
 	logs.Info("正在初始化hashmap,可能耗时比较久,请耐心等候...")
-	defaultSvc := GetDefaultSvcName()
-	if defaultSvc == ""{
+	if defaultSvcName == ""{
 		logs.Error("找不到默认服务，直接返回")
 		return
 	}
@@ -103,7 +102,7 @@ func InitDevBackendMap()  {
 
 	for _,value  :=range devList{
 		sn := strings.ToLower(value.ProductSns)
-		devBackendMap[sn] = defaultSvc
+		devBackendMap[sn] = defaultSvcName
 		domain, ok := domainMap[value.DomainName]
 		if !ok {
 			continue
@@ -115,7 +114,7 @@ func InitDevBackendMap()  {
 		devBackendMap[sn] = sys.SvcName
 		//logs.Info(value.ProductSns,devBackendMap[value.ProductSns])
 	}
-	logs.Info("hashmap初始化完成")
+	logs.Info("hashmap初始化完成,key：设备序列号，value：服务域名")
 }
 func GetAllDomainMap() (map[string]TblDomain,error)   {
 	var list []TblDomain
@@ -124,11 +123,7 @@ func GetAllDomainMap() (map[string]TblDomain,error)   {
 		logs.Error(result.Error)
 		return nil,result.Error
 	}
-	//if  result.RecordNotFound() {
-	//	logs.Error("域表没有任何域")
-	//	return nil,errors.New("查询结果为空")
-	//}
-	fmt.Println(list)
+	logs.Info("全部域列表",list)
 	var m = make(map[string]TblDomain)
 	for _,value  :=range list{
 		m[value.Name] = value
@@ -144,14 +139,11 @@ func GetAllSysMapAndResolveSvcAddr() (map[string]TblSys,error)   {
 		logs.Error(result.Error)
 		return nil,result.Error
 	}
-	//if  result.RecordNotFound() {
-	//	logs.Error("sys表没有任何sys")
-	//	return nil,errors.New("查询结果为空")
-	//}
+	logs.Info("全部服务列表",list)
 	var m = make(map[string]TblSys)
 	for _,value  :=range list{
 		m[value.Uuid] = value
-		ResolveAndSetUdpAddrToAddr(fmt.Sprintf("%s:%d",value.SvcName,OpenConfig.DefaultSvcPort))
+		ResolveAndSetUdpAddrFromAddr(fmt.Sprintf("%s:%d",value.SvcName,OpenConfig.DefaultSvcPort))
 	}
 
 	return m,nil
@@ -188,38 +180,38 @@ func GetDefaultSvcName() string {
 	defaultSvcName = t.SvcName
 	return t.SvcName
 }
-func GetDomainByDomainName(name string) *TblDomain {
+func GetDomainByDomainName(name string) (*TblDomain,error) {
 	var t TblDomain
 	record:=DB_SVC.Where("name = ?", name).First(&t)
 	if  record.RecordNotFound() {
 		logs.Error("找不到域",name)
-		return nil
+		return nil,errors.New("domain not found")
 	}
 	if record.Error!=nil {
 		logs.Error(record.Error)
-		return nil
+		return nil,record.Error
 	}
-	return &t
+	return &t,nil
 }
 
-func GetSysByDomainName(domainName string) *TblSys {
+func GetSysByDomainName(domainName string) (*TblSys,error) {
 	var t TblSys
-	domain := GetDomainByDomainName(domainName)
-	if domain == nil {
-		return nil
+	domain,err := GetDomainByDomainName(domainName)
+	if err != nil {
+		return nil,err
 	}
 	record:=DB_SVC.Where("uuid = ?", domain.SysUuid).First(&t)
 	if  record.RecordNotFound() {
 		logs.Error("找不到服务",domain.SysUuid)
-		return nil
+		return nil,errors.New("sys not found")
 	}
 	if record.Error!=nil {
 		logs.Error(record.Error)
-		return nil
+		return nil,record.Error
 	}
-	return &t
+	return &t,nil
 }
-func GetSvcNameBySn(sn string)string  {
+func GetSvcNameBySn(sn string) string  {
 	dev:=GetDevBySn(sn)
 	if dev == nil {
 		return ""
@@ -229,16 +221,14 @@ func GetSvcNameBySn(sn string)string  {
 		logs.Error("设备域名非法",dev)
 		return ""
 	}
-	sys := GetSysByDomainName(domain)
-	if sys == nil {
+	sys,err := GetSysByDomainName(domain)
+	if err == nil {
 		return ""
 	}
 	return sys.SvcName
 }
 
 func InitDao()  {
-	InitDevBackendMap()
-	InitAllUnknownDevMap()
 	GetDefaultSvcName()
 }
 

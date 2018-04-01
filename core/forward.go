@@ -1,4 +1,3 @@
-// Package forward contains a UDP packet forwarder.
 package core
 
 import (
@@ -16,7 +15,7 @@ type connection struct {
 	dst        *net.UDPAddr
 }
 
-// Forwarder represents a UDP packet forwarder.
+// 转发服务对象
 type Forwarder struct {
 	src          *net.UDPAddr
 	dst          *net.UDPAddr
@@ -34,14 +33,12 @@ type Forwarder struct {
 	closed bool
 }
 
-// DefaultTimeout is the default timeout period of inactivity for convenience
-// sake. It is equivelant to 5 minutes.
+// 默认超时时间是根据设备1分钟没有心跳就通讯失败设置的，超时就拆除连接
 var DefaultTimeout = time.Minute * 1
 
-// Forward forwards UDP packets from the src address to the dst address, with a
-// timeout to "disconnect" clients after the timeout period of inactivity. It
-// implements a reverse NAT and thus supports multiple seperate users. Forward
-// is also asynchronous.
+// 转发服务监听设备端的连接，根据设备序列号转发往目标simserver
+// 含建立连接和超时断开连接回调
+// 实现反向穿透、透明传输、多设备连接
 func Forward(src string, timeout time.Duration) (*Forwarder, error) {
 	logs.SetLogger(logs.AdapterConsole)
 
@@ -212,19 +209,17 @@ func (f *Forwarder) Close() {
 	f.connectionsMutex.Unlock()
 }
 
-// OnConnect can be called with a callback function to be called whenever a
-// new client connects.
+// 当监听client连接时触发
 func (f *Forwarder) OnConnect(callback func(addr string)) {
 	f.connectCallback = callback
 }
 
-// OnConnect can be called with a callback function to be called whenever a
-// new client disconnects (after 5 minutes of inactivity).
+// 当拆除client连接时触发
 func (f *Forwarder) OnDisconnect(callback func(addr string)) {
 	f.disconnectCallback = callback
 }
 
-// Connected returns the list of connected clients in IP:port form.
+// 返回IP:port格式的已连接地址数组
 func (f *Forwarder) Connected() []string {
 	f.connectionsMutex.Lock()
 	results := make([]string, 0, len(f.connections))

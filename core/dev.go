@@ -110,7 +110,7 @@ func FindAndUpdateBackendFromDb(sn string)  {
 		return
 	}
 	//未知设备冲击
-	backend = GetDefaultSvcName()
+	backend = defaultSvcName
 	if backend!="" {
 		devBackendMap[sn] = backend
 		logs.Info("找不到服务名，设置为默认服务名",sn,backend)
@@ -120,8 +120,6 @@ func FindAndUpdateBackendFromDb(sn string)  {
 
 func InitDev()  {
 	logs.SetLogger(logs.AdapterConsole)
-	//domainMap := dao.GetAllDomain()
-	//sysMap := dao.GetAllSys()
-	//devBackendMap := dao.GetAllDev()
-	//logs.Info(domainMap,sysMap,devBackendMap)
+	InitDevBackendMap()
+	InitAllUnknownDevMap()
 }

@@ -25,14 +25,14 @@ func GetUdpAddrFromAddr(addr string) (*net.UDPAddr,error) {
 		return udpAddr,nil
 	}
 	logs.Error("hash map 找不到地址",addr,"进行dns查询")
-	udpAddr,err := ResolveAndSetUdpAddrToAddr(addr)
+	udpAddr,err := ResolveAndSetUdpAddrFromAddr(addr)
 	if err != nil {
 		return nil,err
 	}
 	return udpAddr,nil
 }
 
-func ResolveAndSetUdpAddrToAddr(addr string) (*net.UDPAddr,error) {
+func ResolveAndSetUdpAddrFromAddr(addr string) (*net.UDPAddr,error) {
 	udpAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		logs.Error(err,addr)
