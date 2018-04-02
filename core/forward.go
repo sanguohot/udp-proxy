@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const bufferSize = 1024 * 4
+const bufferSize = 1024 * 32
 
 type connection struct {
 	udp        *net.UDPConn
@@ -185,7 +185,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		if f.connections[addr.String()].lastActive.After(
 			time.Now().Add(-f.timeout)) {
 			shouldChangeTime = true
-			logs.Info("更新超时时间",f.connections[addr.String()].sn,addr.String())
+			logs.Info("更新超时时间",f.connections[addr.String()].sn,addr.String(),f.connections[addr.String()].lastActive,data)
 		}
 	}
 	f.connectionsMutex.RUnlock()
