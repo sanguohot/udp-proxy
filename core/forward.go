@@ -161,6 +161,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 
 			go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 				f.listenerConn.WriteTo(data, addr)
+				f.ConnectionLastActive(addr)
 			}(buf[:n], conn, addr)
 		}
 
@@ -172,15 +173,12 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	//	logs.Error(err,"hashmap保存的连接往服务器转发报文失败，直接返回")
 	//	return
 	//}
+	f.ConnectionLastActive(addr)
+}
 
+func (f *Forwarder) ConnectionLastActive(addr *net.UDPAddr) {
 	shouldChangeTime := false
 	f.connectionsMutex.RLock()
-	//if _, found := f.connections[addr.String()]; found {
-	//	if f.connections[addr.String()].lastActive.Before(
-	//		time.Now().Add(f.timeout / 4)) {
-	//		shouldChangeTime = true
-	//	}
-	//}
 	if _, found := f.connections[addr.String()]; found {
 		if f.connections[addr.String()].lastActive.After(
 			time.Now().Add(-f.timeout)) {
