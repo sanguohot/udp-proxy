@@ -114,7 +114,8 @@ func (f *Forwarder) janitor() {
 
 func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	f.connectionsMutex.RLock()
-	conn, found := f.connections[addr.String()]
+	addrString := addr.String()
+	conn, found := f.connections[addrString]
 	f.connectionsMutex.RUnlock()
 	//logs.Info("是否找到连接",found,"连接对象为",conn)
 	if !found {
@@ -122,68 +123,69 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		if err != nil {
 			return
 		}
-		logs.Info("已知设备创建新的连接",sn,addr.String(),"已连接的设备数",len(f.connections))
-		conn, err := net.ListenUDP("udp", f.client)
-		if err != nil {
-			logs.Error("udp-forwader: failed to dial:", err)
-			return
-		}
-
+		logs.Info("已知设备创建新的连接",sn,addrString,"已连接的设备数",len(f.connections))
+		var (
+			isNewConn bool
+			udpConn *net.UDPConn
+		)
 		f.connectionsMutex.Lock()
-		f.connections[addr.String()] = connection{
-			udp:        conn,
-			lastActive: time.Now(),
-			dst:        dst,
-			sn:			sn,
-		}
-		f.connectionsMutex.Unlock()
-
-		f.connectCallback(addr.String())
-
-		conn.WriteTo(data, dst)
-		//if err != nil {
-		//	logs.Error(err,"新建路的连接往服务器转发报文失败,直接返回")
-		//	return
-		//}
-
-		for conn != nil {
-			buf := make([]byte, bufferSize)
-			n, _, err := conn.ReadFromUDP(buf)
+		//高并发下需要再次判断有没有已经设置hash，已经存在不再更新
+		if _, found := f.connections[addrString]; !found {
+			udpConn, err := net.ListenUDP("udp", f.client)
 			if err != nil {
-				logs.Error(err,"即将关闭连接，并清除hashmap记录",sn)
-				f.connectionsMutex.Lock()
-				conn.Close()
-				delete(f.connections, addr.String())
-				conn = nil
-				f.connectionsMutex.Unlock()
+				logs.Error("udp-forwader: failed to dial:", err)
 				return
 			}
+			f.connections[addrString] = connection{
+				udp:        udpConn,
+				lastActive: time.Now(),
+				dst:        dst,
+				sn:			sn,
+			}
+			isNewConn = true;
+		}else {
+			udpConn = f.connections[addrString].udp
+			isNewConn = false;
+		}
+		f.connectionsMutex.Unlock()
+		f.connectCallback(addrString)
+		udpConn.WriteTo(data, dst)
+		if isNewConn {
+			for udpConn!=nil {
+				buf := make([]byte, bufferSize)
+				n, _, err := udpConn.ReadFromUDP(buf)
+				if err != nil {
+					logs.Error(err,"即将关闭连接，并清除hashmap记录",sn)
+					f.connectionsMutex.Lock()
+					udpConn.Close()
+					udpConn = nil;
+					delete(f.connections, addrString)
+					f.connectionsMutex.Unlock()
+					return
+				}
 
-			go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-				f.listenerConn.WriteTo(data, addr)
-				f.ConnectionLastActive(addr)
-			}(buf[:n], conn, addr)
+				go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+					f.listenerConn.WriteTo(data, addr)
+				}(buf[:n], udpConn, addr)
+			}
 		}
 
 		return
 	}
 
 	conn.udp.WriteTo(data, conn.dst)
-	//if err != nil {
-	//	logs.Error(err,"hashmap保存的连接往服务器转发报文失败，直接返回")
-	//	return
-	//}
 	f.ConnectionLastActive(addr)
 }
 
 func (f *Forwarder) ConnectionLastActive(addr *net.UDPAddr) {
+	addrString := addr.String()
 	shouldChangeTime := false
 	f.connectionsMutex.RLock()
-	if _, found := f.connections[addr.String()]; found {
-		if f.connections[addr.String()].lastActive.After(
+	if _, found := f.connections[addrString]; found {
+		if f.connections[addrString].lastActive.After(
 			time.Now().Add(-f.timeout)) {
 			shouldChangeTime = true
-			//logs.Info("更新超时时间",f.connections[addr.String()].sn,addr.String(),f.connections[addr.String()].lastActive,data)
+			//logs.Info("更新超时时间",f.connections[addrString].sn,addrString,f.connections[addrString].lastActive,data)
 		}
 	}
 	f.connectionsMutex.RUnlock()
@@ -191,10 +193,10 @@ func (f *Forwarder) ConnectionLastActive(addr *net.UDPAddr) {
 	if shouldChangeTime {
 		f.connectionsMutex.Lock()
 		// Make sure it still exists
-		if _, found := f.connections[addr.String()]; found {
-			connWrapper := f.connections[addr.String()]
+		if _, found := f.connections[addrString]; found {
+			connWrapper := f.connections[addrString]
 			connWrapper.lastActive = time.Now()
-			f.connections[addr.String()] = connWrapper
+			f.connections[addrString] = connWrapper
 		}
 		f.connectionsMutex.Unlock()
 	}
