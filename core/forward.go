@@ -128,7 +128,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 			doCircle bool = true
 		)
 		f.connectionsMutex.Lock()
-		//高并发下需要再次判断有没有已经设置hash，已经存在不再更新
+		//高并发下需要再次判断有没有已经设置hash，已经存在只更新时间
 		if _, found := f.connections[addrString]; !found {
 			logs.Info("已知设备创建新的连接",sn,addrString,"已连接的设备数",len(f.connections))
 			udpConn, err := net.ListenUDP("udp", f.client)
@@ -143,6 +143,8 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 				sn:			sn,
 			}
 			isNewConn = true;
+		}else {
+			f.UpdateActiveTimeInSyncLock(addrString)
 		}
 		f.connectionsMutex.Unlock()
 		f.connectCallback(addrString)
@@ -177,6 +179,13 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	f.ConnectionLastActive(addr)
 }
 
+//注意该函数需要锁下执行
+func (f *Forwarder) UpdateActiveTimeInSyncLock(addrString string) {
+	connWrapper := f.connections[addrString]
+	connWrapper.lastActive = time.Now()
+	f.connections[addrString] = connWrapper
+}
+
 func (f *Forwarder) ConnectionLastActive(addr *net.UDPAddr) {
 	addrString := addr.String()
 	shouldChangeTime := false
@@ -194,9 +203,7 @@ func (f *Forwarder) ConnectionLastActive(addr *net.UDPAddr) {
 		f.connectionsMutex.Lock()
 		// Make sure it still exists
 		if _, found := f.connections[addrString]; found {
-			connWrapper := f.connections[addrString]
-			connWrapper.lastActive = time.Now()
-			f.connections[addrString] = connWrapper
+			f.UpdateActiveTimeInSyncLock(addrString)
 		}
 		f.connectionsMutex.Unlock()
 	}
