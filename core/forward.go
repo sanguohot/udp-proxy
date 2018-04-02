@@ -13,6 +13,7 @@ type connection struct {
 	udp        *net.UDPConn
 	lastActive time.Time
 	dst        *net.UDPAddr
+	sn		   string
 }
 
 // 转发服务对象
@@ -121,7 +122,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		if err != nil {
 			return
 		}
-
+		logs.Info("创建新的连接",sn,addr.String())
 		conn, err := net.ListenUDP("udp", f.client)
 		if err != nil {
 			logs.Error("udp-forwader: failed to dial:", err)
@@ -133,6 +134,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 			udp:        conn,
 			lastActive: time.Now(),
 			dst:        dst,
+			sn:			sn,
 		}
 		f.connectionsMutex.Unlock()
 
@@ -183,6 +185,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		if f.connections[addr.String()].lastActive.After(
 			time.Now().Add(-f.timeout)) {
 			shouldChangeTime = true
+			logs.Info("更新超时时间",f.connections[addr.String()].sn,addr.String())
 		}
 	}
 	f.connectionsMutex.RUnlock()
