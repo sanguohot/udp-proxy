@@ -125,12 +125,11 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		}
 		var (
 			isNewConn bool = false
-			udpConn *net.UDPConn = nil
 			doCircle bool = true
 		)
 		f.connectionsMutex.Lock()
 		//高并发下需要再次判断有没有已经设置hash，已经存在不再更新
-		if conn, found := f.connections[addrString]; !found {
+		if _, found := f.connections[addrString]; !found {
 			logs.Info("已知设备创建新的连接",sn,addrString,"已连接的设备数",len(f.connections))
 			udpConn, err := net.ListenUDP("udp", f.client)
 			if err != nil {
@@ -144,21 +143,21 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 				sn:			sn,
 			}
 			isNewConn = true;
-		}else {
-			udpConn = conn.udp
-			isNewConn = false;
 		}
 		f.connectionsMutex.Unlock()
 		f.connectCallback(addrString)
-		udpConn.WriteTo(data, dst)
+		f.connectionsMutex.RLock()
+		conn, _ := f.connections[addrString]
+		f.connectionsMutex.RUnlock()
+		conn.udp.WriteTo(data, dst)
 		if isNewConn {
 			for doCircle {
 				buf := make([]byte, bufferSize)
-				n, _, err := udpConn.ReadFromUDP(buf)
+				n, _, err := conn.udp.ReadFromUDP(buf)
 				if err != nil {
 					logs.Error(err,"即将关闭连接，并清除hashmap记录",sn)
 					f.connectionsMutex.Lock()
-					udpConn.Close()
+					conn.udp.Close()
 					doCircle = false;
 					delete(f.connections, addrString)
 					f.connectionsMutex.Unlock()
@@ -167,7 +166,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 
 				go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 					f.listenerConn.WriteTo(data, addr)
-				}(buf[:n], udpConn, addr)
+				}(buf[:n], conn.udp, addr)
 			}
 		}
 
