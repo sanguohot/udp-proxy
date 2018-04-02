@@ -180,7 +180,7 @@ func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *
 			f.connectionsMutex.Unlock()
 			return
 		}
-
+		f.UpdateActiveTime(src)
 		go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 			f.listenerConn.WriteTo(data, addr)
 		}(buf[:n], udpConn, src)
@@ -194,8 +194,8 @@ func (f *Forwarder) UpdateActiveTimeInSyncLock(addrString string) {
 	f.connections[addrString] = connWrapper
 }
 
-func (f *Forwarder) UpdateActiveTime(addr *net.UDPAddr) {
-	addrString := addr.String()
+func (f *Forwarder) UpdateActiveTime(src *net.UDPAddr) {
+	srcString := src.String()
 	//shouldChangeTime := false
 	//f.connectionsMutex.RLock()
 	//if _, found := f.connections[addrString]; found {
@@ -217,8 +217,8 @@ func (f *Forwarder) UpdateActiveTime(addr *net.UDPAddr) {
 	//}
 	f.connectionsMutex.Lock()
 	// Make sure it still exists
-	if _, found := f.connections[addrString]; found {
-		f.UpdateActiveTimeInSyncLock(addrString)
+	if _, found := f.connections[srcString]; found {
+		f.UpdateActiveTimeInSyncLock(srcString)
 	}
 	f.connectionsMutex.Unlock()
 }
