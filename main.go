@@ -5,7 +5,6 @@ import (
 	"github.com/astaxie/beego/logs"
 	"net/http"
 	"fmt"
-	"time"
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
