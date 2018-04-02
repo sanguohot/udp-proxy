@@ -123,14 +123,15 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		if err != nil {
 			return
 		}
-		logs.Info("已知设备创建新的连接",sn,addrString,"已连接的设备数",len(f.connections))
 		var (
-			isNewConn bool
-			udpConn *net.UDPConn
+			isNewConn bool = false
+			udpConn *net.UDPConn = nil
+			doCircle bool = true
 		)
 		f.connectionsMutex.Lock()
 		//高并发下需要再次判断有没有已经设置hash，已经存在不再更新
-		if _, found := f.connections[addrString]; !found {
+		if conn, found := f.connections[addrString]; !found {
+			logs.Info("已知设备创建新的连接",sn,addrString,"已连接的设备数",len(f.connections))
 			udpConn, err := net.ListenUDP("udp", f.client)
 			if err != nil {
 				logs.Error("udp-forwader: failed to dial:", err)
@@ -144,21 +145,21 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 			}
 			isNewConn = true;
 		}else {
-			udpConn = f.connections[addrString].udp
+			udpConn = conn.udp
 			isNewConn = false;
 		}
 		f.connectionsMutex.Unlock()
 		f.connectCallback(addrString)
 		udpConn.WriteTo(data, dst)
 		if isNewConn {
-			for udpConn!=nil {
+			for doCircle {
 				buf := make([]byte, bufferSize)
 				n, _, err := udpConn.ReadFromUDP(buf)
 				if err != nil {
 					logs.Error(err,"即将关闭连接，并清除hashmap记录",sn)
 					f.connectionsMutex.Lock()
 					udpConn.Close()
-					udpConn = nil;
+					doCircle = false;
 					delete(f.connections, addrString)
 					f.connectionsMutex.Unlock()
 					return
