@@ -81,7 +81,6 @@ func (f *Forwarder) run() {
 			logs.Error(err,"读取客户端报文出错，直接返回")
 			return
 		}
-		//logs.Info("收到报文",addr)
 		go f.handle(buf[:n], addr)
 	}
 }
@@ -123,25 +122,11 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		if err != nil {
 			return
 		}
-		var (
-			isNewConn bool = false
-			doCircle bool = true
-		)
+		var isNewConn bool = false
 		f.connectionsMutex.Lock()
 		//高并发下需要再次判断有没有已经设置hash，已经存在只更新时间
 		if _, found := f.connections[addrString]; !found {
-			logs.Info("已知设备创建新的连接",sn,addrString,"已连接的设备数",len(f.connections))
-			udpConn, err := net.ListenUDP("udp", f.client)
-			if err != nil {
-				logs.Error("udp-forwader: failed to dial:", err)
-				return
-			}
-			f.connections[addrString] = connection{
-				udp:        udpConn,
-				lastActive: time.Now(),
-				dst:        dst,
-				sn:			sn,
-			}
+			f.CreateConnectionAndSaveToMap(sn, addr, dst)
 			isNewConn = true;
 		}else {
 			f.UpdateActiveTimeInSyncLock(addrString)
@@ -151,32 +136,55 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		f.connectionsMutex.RLock()
 		conn, _ := f.connections[addrString]
 		f.connectionsMutex.RUnlock()
-		conn.udp.WriteTo(data, dst)
 		if isNewConn {
-			for doCircle {
-				buf := make([]byte, bufferSize)
-				n, _, err := conn.udp.ReadFromUDP(buf)
-				if err != nil {
-					logs.Error(err,"即将关闭连接，并清除hashmap记录",sn)
-					f.connectionsMutex.Lock()
-					conn.udp.Close()
-					doCircle = false;
-					delete(f.connections, addrString)
-					f.connectionsMutex.Unlock()
-					return
-				}
-
-				go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-					f.listenerConn.WriteTo(data, addr)
-				}(buf[:n], conn.udp, addr)
-			}
+			go f.ListenServerMsg(conn.udp,addr,dst,sn)
 		}
-
+		conn.udp.WriteTo(data, dst)
 		return
 	}
 
+	f.UpdateActiveTime(addr)
 	conn.udp.WriteTo(data, conn.dst)
-	f.ConnectionLastActive(addr)
+}
+
+func (f *Forwarder) CreateConnectionAndSaveToMap(sn string, src *net.UDPAddr, dst *net.UDPAddr)  {
+	srcString := src.String()
+	logs.Info("已知设备创建新的连接",sn,srcString,"已连接的设备数",len(f.connections))
+	udpConn, err := net.ListenUDP("udp", f.client)
+	if err != nil {
+		logs.Error("udp-forwader: failed to dial:", err)
+		return
+	}
+	f.connections[srcString] = connection{
+		udp:        udpConn,
+		lastActive: time.Now(),
+		dst:        dst,
+		sn:			sn,
+	}
+}
+
+func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *net.UDPAddr, sn string) {
+	dstString := dst.String()
+	srcString := src.String()
+	var doCircle bool = true
+	logs.Info("开始循环监听服务器报文",dstString,">>",srcString,sn)
+	for doCircle {
+		buf := make([]byte, bufferSize)
+		n, _, err := udpConn.ReadFromUDP(buf)
+		if err != nil {
+			logs.Error(err,"即将关闭连接，并清除hashmap记录",dstString,">>",srcString,sn)
+			doCircle = false;
+			f.connectionsMutex.Lock()
+			udpConn.Close()
+			delete(f.connections, srcString)
+			f.connectionsMutex.Unlock()
+			return
+		}
+
+		go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+			f.listenerConn.WriteTo(data, addr)
+		}(buf[:n], udpConn, src)
+	}
 }
 
 //注意该函数需要锁下执行
@@ -186,27 +194,33 @@ func (f *Forwarder) UpdateActiveTimeInSyncLock(addrString string) {
 	f.connections[addrString] = connWrapper
 }
 
-func (f *Forwarder) ConnectionLastActive(addr *net.UDPAddr) {
+func (f *Forwarder) UpdateActiveTime(addr *net.UDPAddr) {
 	addrString := addr.String()
-	shouldChangeTime := false
-	f.connectionsMutex.RLock()
+	//shouldChangeTime := false
+	//f.connectionsMutex.RLock()
+	//if _, found := f.connections[addrString]; found {
+	//	if f.connections[addrString].lastActive.After(
+	//		time.Now().Add(-f.timeout)) {
+	//		shouldChangeTime = true
+	//		//logs.Info("更新超时时间",f.connections[addrString].sn,addrString,f.connections[addrString].lastActive,data)
+	//	}
+	//}
+	//f.connectionsMutex.RUnlock()
+	//
+	//if shouldChangeTime {
+	//	f.connectionsMutex.Lock()
+	//	// Make sure it still exists
+	//	if _, found := f.connections[addrString]; found {
+	//		f.UpdateActiveTimeInSyncLock(addrString)
+	//	}
+	//	f.connectionsMutex.Unlock()
+	//}
+	f.connectionsMutex.Lock()
+	// Make sure it still exists
 	if _, found := f.connections[addrString]; found {
-		if f.connections[addrString].lastActive.After(
-			time.Now().Add(-f.timeout)) {
-			shouldChangeTime = true
-			//logs.Info("更新超时时间",f.connections[addrString].sn,addrString,f.connections[addrString].lastActive,data)
-		}
+		f.UpdateActiveTimeInSyncLock(addrString)
 	}
-	f.connectionsMutex.RUnlock()
-
-	if shouldChangeTime {
-		f.connectionsMutex.Lock()
-		// Make sure it still exists
-		if _, found := f.connections[addrString]; found {
-			f.UpdateActiveTimeInSyncLock(addrString)
-		}
-		f.connectionsMutex.Unlock()
-	}
+	f.connectionsMutex.Unlock()
 }
 
 func (f *Forwarder) Close() {
