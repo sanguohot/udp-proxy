@@ -35,7 +35,7 @@ type Forwarder struct {
 }
 
 // 默认超时时间，超时就拆除连接
-var DefaultTimeout = time.Minute * 5
+var DefaultTimeout = time.Minute * 1
 
 // 转发服务监听设备端的连接，根据设备序列号转发往目标simserver
 // 含建立连接和超时断开连接回调
@@ -173,7 +173,7 @@ func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *
 		buf := make([]byte, bufferSize)
 		n, _, err := udpConn.ReadFromUDP(buf)
 		if err != nil {
-			logs.Error(err,"即将关闭连接，并清除hashmap记录",dstString,">>",srcString,sn)
+			logs.Error(err,"即将关闭连接，并清除hashmap记录",srcString,">>>",dstString,sn)
 			doCircle = false;
 			f.connectionsMutex.Lock()
 			udpConn.Close()
