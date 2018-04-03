@@ -34,8 +34,8 @@ type Forwarder struct {
 	closed bool
 }
 
-// 默认超时时间是根据设备1分钟没有心跳就通讯失败设置的，超时就拆除连接
-var DefaultTimeout = time.Minute * 1
+// 默认超时时间，超时就拆除连接
+var DefaultTimeout = time.Minute * 5
 
 // 转发服务监听设备端的连接，根据设备序列号转发往目标simserver
 // 含建立连接和超时断开连接回调
@@ -148,8 +148,9 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 }
 
 func (f *Forwarder) CreateConnectionAndSaveToMap(sn string, src *net.UDPAddr, dst *net.UDPAddr)  {
+	dstString := dst.String()
 	srcString := src.String()
-	logs.Info("已知设备创建新的连接",sn,srcString,"已连接的设备数",len(f.connections))
+	logs.Info("已知设备创建新的连接",sn,srcString,">>>",dstString,"已连接的设备数",len(f.connections))
 	udpConn, err := net.ListenUDP("udp", f.client)
 	if err != nil {
 		logs.Error("udp-forwader: failed to dial:", err)
@@ -167,7 +168,7 @@ func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *
 	dstString := dst.String()
 	srcString := src.String()
 	var doCircle bool = true
-	logs.Info("开始循环监听服务器报文",dstString,">>",srcString,sn)
+	//logs.Info("开始循环监听服务器报文",dstString,">>",srcString,sn)
 	for doCircle {
 		buf := make([]byte, bufferSize)
 		n, _, err := udpConn.ReadFromUDP(buf)
@@ -180,7 +181,6 @@ func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *
 			f.connectionsMutex.Unlock()
 			return
 		}
-		f.UpdateActiveTime(src)
 		go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 			f.listenerConn.WriteTo(data, addr)
 		}(buf[:n], udpConn, src)
