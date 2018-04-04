@@ -120,6 +120,7 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	if !found {
 		dst,sn,err := GetDstAndSnFromOffset(data)
 		if err != nil {
+			logs.Error(err)
 			return
 		}
 		var isNewConn bool = false
