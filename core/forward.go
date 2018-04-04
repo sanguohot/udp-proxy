@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const bufferSize = 1024 * 4
+const bufferSize = 1024 * 60
 
 type connection struct {
 	udp        *net.UDPConn
