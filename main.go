@@ -3,9 +3,9 @@ package main
 import (
 	core "udp-proxy/core"
 	"github.com/astaxie/beego/logs"
-	"github.com/1lann/udp-forward"
 	"net/http"
 	"fmt"
+	"github.com/1lann/udp-forward"
 )
 
 func helloHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,8 +22,7 @@ func main() {
 	core.Init()
 	src := "0.0.0.0:4042"
 	//time.Sleep(10*time.Second)
-	//_, err := core.Forward(src, core.DefaultTimeout)
-	_, err := forward.Forward("0.0.0.0:4042", "qnsoft-2018.dmcld.com:52022", forward.DefaultTimeout)
+	_, err := core.Forward(src, core.DefaultTimeout)
 	if err != nil {
 		logs.Error(err)
 		return
