@@ -176,7 +176,7 @@ func (f *Forwarder) CreateConnectionAndSaveToMap(sn string, src *net.UDPAddr, ds
 	//	return
 	//}
 	//返回connected连接
-	udpConn, err := net.DialUDP("udp", src, dst)
+	udpConn, err := net.DialUDP("udp", nil, dst)
 	if err != nil {
 		logs.Error("udp-forwader: failed to dial:", err)
 		return err
