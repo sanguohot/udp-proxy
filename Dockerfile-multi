@@ -4,7 +4,8 @@ RUN apk add --no-cache git
 WORKDIR /opt/udp
 RUN go get -d -v github.com/astaxie/beego/logs \
 && go get -d -v github.com/jinzhu/gorm \
-&& go get -d -v github.com/jinzhu/gorm/dialects/mysql
+&& go get -d -v github.com/jinzhu/gorm/dialects/mysql \
+&& go get -d -v github.com/1lann/udp-forward
 COPY core $GOPATH/src/udp-proxy/core
 COPY main.go .
 RUN ls -al $GOPATH/src/udp-proxy/core
