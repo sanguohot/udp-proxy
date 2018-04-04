@@ -190,6 +190,7 @@ func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *
 			f.connectionsMutex.Unlock()
 			return
 		}
+		logs.Info("已经接收",n,"字节",dstString,">>",srcString)
 		go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
 			f.listenerConn.WriteTo(data, addr)
 		}(buf[:n], udpConn, src)
