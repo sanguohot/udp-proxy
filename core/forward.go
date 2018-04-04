@@ -140,12 +140,20 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		if isNewConn {
 			go f.ListenServerMsg(conn.udp,addr,dst,sn)
 		}
-		conn.udp.WriteTo(data, dst)
+		_,err = conn.udp.WriteTo(data, dst)
+		if err!=nil {
+			logs.Error(err)
+		}
 		return
 	}
 
 	f.UpdateActiveTime(addr)
-	conn.udp.WriteTo(data, conn.dst)
+	n,err := conn.udp.WriteTo(data, conn.dst)
+	if err!=nil {
+		logs.Error(err)
+	}else {
+		logs.Error("已经发送",n,"字节",addr.String(),">>",conn.dst.String())
+	}
 }
 
 func (f *Forwarder) CreateConnectionAndSaveToMap(sn string, src *net.UDPAddr, dst *net.UDPAddr)  {
