@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const bufferSize = 1024 * 32
+const bufferSize = 1024 * 4
 
 type connection struct {
 	udp        *net.UDPConn
@@ -181,9 +181,10 @@ func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *
 			f.connectionsMutex.Unlock()
 			return
 		}
-		go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-			f.listenerConn.WriteTo(data, addr)
-		}(buf[:n], udpConn, src)
+		//go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+		//	f.listenerConn.WriteTo(data, addr)
+		//}(buf[:n], udpConn, src)
+		f.listenerConn.WriteTo(buf[:n], src)
 	}
 }
 
