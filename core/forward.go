@@ -81,7 +81,9 @@ func (f *Forwarder) run() {
 			logs.Error(err,"读取客户端报文出错，直接返回")
 			return
 		}
-		go f.handle(buf[:n], addr)
+		if n > 0{
+			go f.handle(buf[:n], addr)
+		}
 	}
 }
 
@@ -148,11 +150,9 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	}
 
 	go f.UpdateActiveTime(addr)
-	n,err := conn.udp.WriteTo(data, conn.dst)
+	_,err := conn.udp.WriteTo(data, conn.dst)
 	if err!=nil {
 		logs.Error(err)
-	}else {
-		logs.Info("已经发送",n,"字节",addr.String(),">>",conn.dst.String())
 	}
 }
 
@@ -190,10 +190,11 @@ func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *
 			f.connectionsMutex.Unlock()
 			return
 		}
-		logs.Info("已经接收",n,"字节",dstString,">>",srcString)
-		go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-			f.listenerConn.WriteTo(data, addr)
-		}(buf[:n], udpConn, src)
+		if n>0 {
+			go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+				f.listenerConn.WriteTo(data, addr)
+			}(buf[:n], udpConn, src)
+		}
 	}
 }
 
