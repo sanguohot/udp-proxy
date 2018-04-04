@@ -57,8 +57,8 @@ func Forward(src string, timeout time.Duration) (*Forwarder, error) {
 	}
 
 	forwarder.client = &net.UDPAddr{
-		//IP:   forwarder.src.IP,
-		IP: net.IPv4zero,
+		IP:   forwarder.src.IP,
+		//IP: net.IPv4zero,
 		Port: 0,
 		Zone: forwarder.src.Zone,
 	}
