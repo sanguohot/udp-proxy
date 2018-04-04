@@ -57,7 +57,8 @@ func Forward(src string, timeout time.Duration) (*Forwarder, error) {
 	}
 
 	forwarder.client = &net.UDPAddr{
-		IP:   forwarder.src.IP,
+		//IP:   forwarder.src.IP,
+		IP: net.IPv4zero,
 		Port: 0,
 		Zone: forwarder.src.Zone,
 	}
@@ -129,7 +130,11 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		f.connectionsMutex.Lock()
 		//高并发下需要再次判断有没有已经设置hash，已经存在只更新时间
 		if _, found := f.connections[addrString]; !found {
-			f.CreateConnectionAndSaveToMap(sn, addr, dst)
+			err = f.CreateConnectionAndSaveToMap(sn, addr, dst)
+			if err!=nil {
+				f.connectionsMutex.Unlock()
+				return
+			}
 			isNewConn = true;
 		}else {
 			f.UpdateActiveTimeInSyncLock(addrString)
@@ -142,7 +147,9 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		if isNewConn {
 			go f.ListenServerMsg(conn.udp,addr,dst,sn)
 		}
-		_,err = conn.udp.WriteTo(data, dst)
+		//_,err = conn.udp.WriteTo(data, dst)
+		//因为是已经建立的连接，无需指定目的地址
+		_,err = conn.udp.Write(data)
 		if err!=nil {
 			logs.Error(err)
 		}
@@ -150,20 +157,29 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 	}
 
 	go f.UpdateActiveTime(addr)
-	_,err := conn.udp.WriteTo(data, conn.dst)
+	//_,err := conn.udp.WriteTo(data, conn.dst)
+	//因为是已经建立的连接，无需指定目的地址
+	_,err := conn.udp.Write(data)
 	if err!=nil {
 		logs.Error(err)
 	}
 }
 
-func (f *Forwarder) CreateConnectionAndSaveToMap(sn string, src *net.UDPAddr, dst *net.UDPAddr)  {
+func (f *Forwarder) CreateConnectionAndSaveToMap(sn string, src *net.UDPAddr, dst *net.UDPAddr) error  {
 	dstString := dst.String()
 	srcString := src.String()
 	logs.Info("已知设备创建新的连接",sn,srcString,">>>",dstString,"已连接的设备数",len(f.connections))
-	udpConn, err := net.ListenUDP("udp", f.client)
+	//返回unconnected连接
+	//udpConn, err := net.ListenUDP("udp", f.client)
+	//if err != nil {
+	//	logs.Error("udp-forwader: failed to dial:", err)
+	//	return
+	//}
+	//返回connected连接
+	udpConn, err := net.DialUDP("udp", src, dst)
 	if err != nil {
 		logs.Error("udp-forwader: failed to dial:", err)
-		return
+		return err
 	}
 	f.connections[srcString] = connection{
 		udp:        udpConn,
@@ -171,6 +187,7 @@ func (f *Forwarder) CreateConnectionAndSaveToMap(sn string, src *net.UDPAddr, ds
 		dst:        dst,
 		sn:			sn,
 	}
+	return  nil
 }
 
 func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *net.UDPAddr, sn string) {
