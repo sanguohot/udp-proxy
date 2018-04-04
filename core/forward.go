@@ -147,12 +147,12 @@ func (f *Forwarder) handle(data []byte, addr *net.UDPAddr) {
 		return
 	}
 
-	f.UpdateActiveTime(addr)
+	go f.UpdateActiveTime(addr)
 	n,err := conn.udp.WriteTo(data, conn.dst)
 	if err!=nil {
 		logs.Error(err)
 	}else {
-		logs.Error("已经发送",n,"字节",addr.String(),">>",conn.dst.String())
+		logs.Info("已经发送",n,"字节",addr.String(),">>",conn.dst.String())
 	}
 }
 
@@ -182,7 +182,7 @@ func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *
 		buf := make([]byte, bufferSize)
 		n, _, err := udpConn.ReadFromUDP(buf)
 		if err != nil {
-			logs.Error(err,"即将关闭连接，并清除hashmap记录",srcString,">>>",dstString,sn)
+			logs.Error(err,"关闭连接",srcString,">>>",dstString,sn)
 			doCircle = false;
 			f.connectionsMutex.Lock()
 			udpConn.Close()
@@ -190,10 +190,9 @@ func (f *Forwarder) ListenServerMsg(udpConn *net.UDPConn,src *net.UDPAddr, dst *
 			f.connectionsMutex.Unlock()
 			return
 		}
-		//go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
-		//	f.listenerConn.WriteTo(data, addr)
-		//}(buf[:n], udpConn, src)
-		f.listenerConn.WriteTo(buf[:n], src)
+		go func(data []byte, conn *net.UDPConn, addr *net.UDPAddr) {
+			f.listenerConn.WriteTo(data, addr)
+		}(buf[:n], udpConn, src)
 	}
 }
 
