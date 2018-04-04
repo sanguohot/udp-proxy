@@ -3,6 +3,7 @@ package main
 import (
 	core "udp-proxy/core"
 	"github.com/astaxie/beego/logs"
+	"github.com/1lann/udp-forward"
 	"net/http"
 	"fmt"
 )
@@ -21,7 +22,8 @@ func main() {
 	core.Init()
 	src := "0.0.0.0:4042"
 	//time.Sleep(10*time.Second)
-	_, err := core.Forward(src, core.DefaultTimeout)
+	//_, err := core.Forward(src, core.DefaultTimeout)
+	_, err := forward.Forward("0.0.0.0:4042", "qnsoft.dmcld.com:52022", forward.DefaultTimeout)
 	if err != nil {
 		logs.Error(err)
 		return
